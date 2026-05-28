@@ -1,52 +1,53 @@
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView } from 'react-native'
-import { useState, useEffect } from 'react'
-import { signInWithEmailAndPassword, onAuthStateChanged } from 'firebase/auth'
-import { doc, getDoc } from 'firebase/firestore'
-import { auth, db } from '@/config/firebase'
-import { useRouter } from 'expo-router'
-import { C, F } from '@/constants/theme'
+import { auth, db } from "@/config/firebase";
+import { C, F } from "@/constants/theme";
+import { useRouter } from "expo-router";
+import { signInWithEmailAndPassword } from 'firebase/auth'
+import { doc, getDoc } from "firebase/firestore";
+import { useState } from 'react'
+import {
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 export default function LoginScreen() {
-  const [perfil, setPerfil] = useState<'aluno' | 'professor'>('aluno')
-  const [email, setEmail] = useState('')
-  const [senha, setSenha] = useState('')
-  const [carregando, setCarregando] = useState(false)
-  const router = useRouter()
+  const [perfil, setPerfil] = useState<"aluno" | "professor">("aluno");
+  const [email, setEmail] = useState("");
+  const [senha, setSenha] = useState("");
+  const [carregando, setCarregando] = useState(false);
+  const router = useRouter();
 
-  useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (usuario) => {
-      if (usuario) router.replace('/(aluno)/')
-    })
-    return () => unsub()
-  }, [])
-
+  
   async function entrar() {
     if (!email || !senha) {
-      Alert.alert('ERRO', 'Preencha usuario e senha.')
-      return
+      Alert.alert("ERRO", "Preencha usuario e senha.");
+      return;
     }
-    setCarregando(true)
+    setCarregando(true);
     try {
-      const credencial = await signInWithEmailAndPassword(auth, email, senha)
-      const uid = credencial.user.uid
-      const snap = await getDoc(doc(db, 'usuarios', uid))
-      const dados = snap.data()
+      const credencial = await signInWithEmailAndPassword(auth, email, senha);
+      const uid = credencial.user.uid;
+      const snap = await getDoc(doc(db, "usuarios", uid));
+      const dados = snap.data();
       if (dados?.perfil !== perfil) {
-        Alert.alert('PERFIL INCORRETO', `Essa conta e de ${dados?.perfil}.`)
-        setCarregando(false)
-        return
+        Alert.alert("PERFIL INCORRETO", `Essa conta e de ${dados?.perfil}.`);
+        setCarregando(false);
+        return;
       }
-      if (perfil === 'aluno') router.replace('/aluno')
-      else router.replace('/professor')
+      if (perfil === "aluno") router.replace("/(aluno)/");
+      else router.replace("/(professor)/");
     } catch {
-      Alert.alert('ERRO', 'Usuario ou senha incorretos.')
+      Alert.alert("ERRO", "Usuario ou senha incorretos.");
     }
-    setCarregando(false)
+    setCarregando(false);
   }
 
   return (
     <ScrollView style={s.scroll} contentContainerStyle={s.container}>
-
       {/* Logo */}
       <View style={s.logoWrap}>
         <Text style={s.logo}>EDUQUEST</Text>
@@ -56,18 +57,18 @@ export default function LoginScreen() {
       {/* Toggle perfil */}
       <View style={s.toggle}>
         <TouchableOpacity
-          style={[s.toggleBtn, perfil === 'aluno' && s.toggleBtnOn]}
-          onPress={() => setPerfil('aluno')}
+          style={[s.toggleBtn, perfil === "aluno" && s.toggleBtnOn]}
+          onPress={() => setPerfil("aluno")}
         >
-          <Text style={[s.toggleTxt, perfil === 'aluno' && s.toggleTxtOn]}>
+          <Text style={[s.toggleTxt, perfil === "aluno" && s.toggleTxtOn]}>
             ★ ALUNO
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[s.toggleBtn, perfil === 'professor' && s.toggleBtnOn]}
-          onPress={() => setPerfil('professor')}
+          style={[s.toggleBtn, perfil === "professor" && s.toggleBtnOn]}
+          onPress={() => setPerfil("professor")}
         >
-          <Text style={[s.toggleTxt, perfil === 'professor' && s.toggleTxtOn]}>
+          <Text style={[s.toggleTxt, perfil === "professor" && s.toggleTxtOn]}>
             ◆ PROFESSOR
           </Text>
         </TouchableOpacity>
@@ -103,21 +104,20 @@ export default function LoginScreen() {
         activeOpacity={0.8}
       >
         <Text style={s.btnBlueTxt}>
-          {carregando ? 'CARREGANDO...' : '▶ ENTRAR'}
+          {carregando ? "CARREGANDO..." : "▶ ENTRAR"}
         </Text>
       </TouchableOpacity>
 
       {/* Cadastro */}
       <TouchableOpacity
         style={s.btnGhost}
-        onPress={() => router.push('/(auth)/cadastro')}
+        onPress={() => router.push("/(auth)/cadastro")}
         activeOpacity={0.8}
       >
         <Text style={s.btnGhostTxt}>NOVO HEROI: CADASTRAR</Text>
       </TouchableOpacity>
-
     </ScrollView>
-  )
+  );
 }
 
 const s = StyleSheet.create({
@@ -127,12 +127,12 @@ const s = StyleSheet.create({
   },
   container: {
     flexGrow: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
     padding: 20,
     paddingTop: 60,
   },
   logoWrap: {
-    alignItems: 'center',
+    alignItems: "center",
     borderWidth: 1,
     borderColor: C.border,
     padding: 20,
@@ -153,7 +153,7 @@ const s = StyleSheet.create({
     letterSpacing: 2,
   },
   toggle: {
-    flexDirection: 'row',
+    flexDirection: "row",
     borderWidth: 1,
     borderColor: C.border,
     marginBottom: 20,
@@ -161,7 +161,7 @@ const s = StyleSheet.create({
   toggleBtn: {
     flex: 1,
     paddingVertical: 10,
-    alignItems: 'center',
+    alignItems: "center",
     backgroundColor: C.bg,
   },
   toggleBtnOn: {
@@ -174,7 +174,7 @@ const s = StyleSheet.create({
     letterSpacing: 1,
   },
   toggleTxtOn: {
-    color: '#000',
+    color: "#000",
   },
   label: {
     fontFamily: F,
@@ -201,16 +201,16 @@ const s = StyleSheet.create({
     borderRightWidth: 2,
     borderTopColor: C.blue2,
     borderLeftColor: C.blue2,
-    borderBottomColor: '#112266',
-    borderRightColor: '#112266',
+    borderBottomColor: "#112266",
+    borderRightColor: "#112266",
     paddingVertical: 14,
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 8,
   },
   btnBlueTxt: {
     fontFamily: F,
     fontSize: 8,
-    color: '#000',
+    color: "#000",
     letterSpacing: 1,
   },
   btnGhost: {
@@ -224,7 +224,7 @@ const s = StyleSheet.create({
     borderBottomColor: C.border2,
     borderRightColor: C.border2,
     paddingVertical: 10,
-    alignItems: 'center',
+    alignItems: "center",
   },
   btnGhostTxt: {
     fontFamily: F,
@@ -232,4 +232,4 @@ const s = StyleSheet.create({
     color: C.text3,
     letterSpacing: 1,
   },
-})
+});
