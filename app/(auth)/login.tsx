@@ -1,6 +1,6 @@
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView } from 'react-native'
-import { useState } from 'react'
-import { signInWithEmailAndPassword } from 'firebase/auth'
+import { useState, useEffect } from 'react'
+import { signInWithEmailAndPassword, onAuthStateChanged } from 'firebase/auth'
 import { doc, getDoc } from 'firebase/firestore'
 import { auth, db } from '@/config/firebase'
 import { useRouter } from 'expo-router'
@@ -12,6 +12,13 @@ export default function LoginScreen() {
   const [senha, setSenha] = useState('')
   const [carregando, setCarregando] = useState(false)
   const router = useRouter()
+
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (usuario) => {
+      if (usuario) router.replace('/(aluno)/')
+    })
+    return () => unsub()
+  }, [])
 
   async function entrar() {
     if (!email || !senha) {

@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useRouter } from 'expo-router'
 import { collection, query, where, getDocs, updateDoc, doc } from 'firebase/firestore'
 import { db } from '@/config/firebase'
+import { C, F } from '@/constants/theme'
 
 type Voucher = {
   id: string
@@ -21,37 +22,28 @@ export default function ValidarScreen() {
   const [buscando, setBuscando] = useState(false)
   const [validando, setValidando] = useState(false)
 
-  async function buscarVoucher() {
-    if (!codigo.trim()) {
-      Alert.alert('Atenção', 'Digite o código do voucher.')
-      return
-    }
+  async function buscar() {
+    if (!codigo.trim()) { Alert.alert('ERRO', 'Digite o codigo do voucher.'); return }
     setBuscando(true)
     try {
-      const q = query(
-        collection(db, 'vouchers'),
-        where('codigo', '==', codigo.trim().toUpperCase())
-      )
+      const q = query(collection(db, 'vouchers'), where('codigo', '==', codigo.trim().toUpperCase()))
       const snap = await getDocs(q)
       if (snap.empty) {
-        Alert.alert('Não encontrado', 'Código inválido ou inexistente.')
+        Alert.alert('NAO ENCONTRADO', 'Codigo invalido ou inexistente.')
         setVoucher(null)
       } else {
-        const docSnap = snap.docs[0]
-        setVoucher({ id: docSnap.id, ...docSnap.data() } as Voucher)
+        const d = snap.docs[0]
+        setVoucher({ id: d.id, ...d.data() } as Voucher)
       }
-    } catch (e) {
-      Alert.alert('Erro', 'Não foi possível buscar o voucher.')
+    } catch {
+      Alert.alert('ERRO', 'Nao foi possivel buscar o voucher.')
     }
     setBuscando(false)
   }
 
-  async function validarVoucher() {
+  async function validar() {
     if (!voucher) return
-    if (voucher.validado) {
-      Alert.alert('Atenção', 'Este voucher já foi validado.')
-      return
-    }
+    if (voucher.validado) { Alert.alert('ATENCAO', 'Este voucher ja foi validado.'); return }
     setValidando(true)
     try {
       await updateDoc(doc(db, 'vouchers', voucher.id), {
@@ -59,135 +51,166 @@ export default function ValidarScreen() {
         validadoEm: new Date().toISOString(),
       })
       setVoucher({ ...voucher, validado: true })
-      Alert.alert(
-        '✓ Validado!',
-        `Bônus de ${voucher.xp} XP em ${voucher.nomeMateria} confirmado para ${voucher.nomeAluno}.`
-      )
-    } catch (e) {
-      Alert.alert('Erro', 'Não foi possível validar o voucher.')
+      Alert.alert('VALIDADO!', `Bonus de ${voucher.xp} XP em ${voucher.nomeMateria} confirmado para ${voucher.nomeAluno}.`)
+    } catch {
+      Alert.alert('ERRO', 'Nao foi possivel validar o voucher.')
     }
     setValidando(false)
   }
 
   return (
     <ScrollView style={s.scroll} contentContainerStyle={s.container}>
-      <TouchableOpacity onPress={() => router.back()} style={s.btnVoltar}>
-        <Text style={s.txtVoltar}>← Voltar</Text>
-      </TouchableOpacity>
 
-      <Text style={s.titulo}>Validar voucher</Text>
-      <Text style={s.descricao}>Digite o código apresentado pelo aluno</Text>
-
-      <View style={s.inputRow}>
-        <TextInput
-          style={s.input}
-          placeholder="Ex: EQ-ABC12345"
-          placeholderTextColor="#888"
-          value={codigo}
-          onChangeText={setCodigo}
-          autoCapitalize="characters"
-        />
-        <TouchableOpacity
-          style={s.btnBuscar}
-          onPress={buscarVoucher}
-          disabled={buscando}
-        >
-          <Text style={s.txtBuscar}>
-            {buscando ? '...' : '🔍'}
-          </Text>
-        </TouchableOpacity>
+      {/* Header */}
+      <View style={s.win}>
+        <View style={s.winInner}>
+          <View style={s.winTitle}>
+            <TouchableOpacity onPress={() => router.back()}>
+              <Text style={s.backTxt}>◀ VOLTAR</Text>
+            </TouchableOpacity>
+            <Text style={s.winTitleTxt}>🎟 VALIDAR VOUCHER</Text>
+          </View>
+          <View style={s.titleBody}>
+            <Text style={s.titleSub}>DIGITE O CODIGO APRESENTADO PELO ALUNO</Text>
+          </View>
+        </View>
       </View>
 
-      {voucher && (
-        <View style={[s.card, voucher.validado && s.cardValidado]}>
-          <View style={s.cardHeader}>
-            <Text style={s.cardCodigo}>{voucher.codigo}</Text>
-            {voucher.validado && (
-              <View style={s.badgeValidado}>
-                <Text style={s.txtBadge}>✓ Validado</Text>
-              </View>
-            )}
+      {/* Campo de busca */}
+      <View style={s.win}>
+        <View style={s.winInner}>
+          <View style={s.winTitle}>
+            <Text style={s.winTitleTxt}>CODIGO DO VOUCHER</Text>
           </View>
+          <View style={s.searchBody}>
+            <TextInput
+              style={s.input}
+              value={codigo}
+              onChangeText={setCodigo}
+              placeholder="EX: EQ-ABC12345"
+              placeholderTextColor={C.text3}
+              autoCapitalize="characters"
+            />
+            <TouchableOpacity
+              style={s.btnGreen}
+              onPress={buscar}
+              disabled={buscando}
+              activeOpacity={0.8}
+            >
+              <Text style={s.btnGreenTxt}>
+                {buscando ? 'BUSCANDO...' : '▶ BUSCAR'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
 
-          <View style={s.infoRow}>
-            <Text style={s.infoLabel}>Aluno</Text>
-            <Text style={s.infoValor}>{voucher.nomeAluno}</Text>
-          </View>
-          <View style={s.infoRow}>
-            <Text style={s.infoLabel}>Matéria</Text>
-            <Text style={s.infoValor}>{voucher.nomeMateria}</Text>
-          </View>
-          <View style={s.infoRow}>
-            <Text style={s.infoLabel}>XP conquistado</Text>
-            <Text style={[s.infoValor, { color: '#4A90E2' }]}>{voucher.xp} XP</Text>
-          </View>
-          <View style={[s.infoRow, { borderBottomWidth: 0 }]}>
-            <Text style={s.infoLabel}>Gerado em</Text>
-            <Text style={s.infoValor}>
-              {new Date(voucher.criadoEm).toLocaleDateString('pt-BR')}
-            </Text>
+      {/* Resultado */}
+      {voucher && (
+        <>
+          <View style={s.win}>
+            <View style={[s.winInner, { borderColor: voucher.validado ? C.green : C.gold }]}>
+              <View style={s.winTitle}>
+                <Text style={[s.winTitleTxt, { color: C.gold2 }]}>{voucher.codigo}</Text>
+                {voucher.validado && (
+                  <View style={[s.badge, { borderColor: C.green }]}>
+                    <Text style={[s.badgeTxt, { color: C.green2 }]}>✓ VALIDADO</Text>
+                  </View>
+                )}
+              </View>
+              <View style={s.statRow}>
+                <Text style={s.statLbl}>ALUNO</Text>
+                <Text style={s.statVal}>{voucher.nomeAluno}</Text>
+              </View>
+              <View style={s.statRow}>
+                <Text style={s.statLbl}>MATERIA</Text>
+                <Text style={s.statVal}>{voucher.nomeMateria}</Text>
+              </View>
+              <View style={s.statRow}>
+                <Text style={s.statLbl}>XP CONQUISTADO</Text>
+                <Text style={[s.statVal, { color: C.blue2 }]}>{voucher.xp} XP</Text>
+              </View>
+              <View style={[s.statRow, { borderBottomWidth: 0 }]}>
+                <Text style={s.statLbl}>GERADO EM</Text>
+                <Text style={s.statVal}>
+                  {new Date(voucher.criadoEm).toLocaleDateString('pt-BR')}
+                </Text>
+              </View>
+            </View>
           </View>
 
           {!voucher.validado && (
-            <TouchableOpacity
-              style={s.btnValidar}
-              onPress={validarVoucher}
-              disabled={validando}
-            >
-              <Text style={s.txtValidar}>
-                {validando ? 'Validando...' : '✓ Confirmar bônus'}
-              </Text>
-            </TouchableOpacity>
+            <View style={s.win}>
+              <View style={s.winInner}>
+                <TouchableOpacity
+                  style={s.btnGreen}
+                  onPress={validar}
+                  disabled={validando}
+                  activeOpacity={0.8}
+                >
+                  <Text style={s.btnGreenTxt}>
+                    {validando ? 'VALIDANDO...' : '✓ CONFIRMAR BONUS'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
           )}
-        </View>
+        </>
       )}
+
     </ScrollView>
   )
 }
 
 const s = StyleSheet.create({
-  scroll: { flex: 1, backgroundColor: '#1A1A2E' },
-  container: { padding: 24, paddingTop: 60 },
-  btnVoltar: { marginBottom: 24 },
-  txtVoltar: { color: '#4A90E2', fontSize: 16 },
-  titulo: { color: '#fff', fontSize: 28, fontWeight: 'bold', marginBottom: 8 },
-  descricao: { color: '#888', fontSize: 15, marginBottom: 24 },
-  inputRow: { flexDirection: 'row', gap: 12, marginBottom: 24 },
+  scroll: { flex: 1, backgroundColor: C.bg },
+  container: { padding: 12, paddingTop: 48, gap: 4 },
+
+  win: { borderWidth: 1, borderColor: C.border, backgroundColor: C.panel },
+  winInner: { borderWidth: 1, borderColor: C.border2, margin: 2 },
+  winTitle: {
+    backgroundColor: C.panel,
+    borderBottomWidth: 1, borderBottomColor: C.border,
+    paddingVertical: 5, paddingHorizontal: 8,
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+  },
+  winTitleTxt: { fontFamily: F, fontSize: 7, color: C.blue2, letterSpacing: 1 },
+  backTxt: { fontFamily: F, fontSize: 6, color: C.text3 },
+
+  titleBody: { padding: 10 },
+  titleSub: { fontFamily: F, fontSize: 6, color: C.text3 },
+
+  searchBody: { padding: 10 },
   input: {
-    flex: 1, backgroundColor: '#16213E', borderRadius: 12,
-    padding: 16, color: '#fff', fontSize: 16,
-    borderWidth: 1, borderColor: '#333',
+    backgroundColor: C.bg,
+    borderWidth: 1, borderColor: C.border,
+    padding: 10, color: C.text,
+    fontFamily: F, fontSize: 8,
+    marginBottom: 8,
+    letterSpacing: 2,
   },
-  btnBuscar: {
-    backgroundColor: '#4A90E2', borderRadius: 12,
-    width: 52, justifyContent: 'center', alignItems: 'center',
+
+  btnGreen: {
+    backgroundColor: C.green,
+    borderTopWidth: 2, borderLeftWidth: 2,
+    borderBottomWidth: 2, borderRightWidth: 2,
+    borderTopColor: C.green2, borderLeftColor: C.green2,
+    borderBottomColor: '#104830', borderRightColor: '#104830',
+    paddingVertical: 12, alignItems: 'center',
+    margin: 8,
   },
-  txtBuscar: { fontSize: 20 },
-  card: {
-    backgroundColor: '#16213E', borderRadius: 16,
-    padding: 20, borderWidth: 1, borderColor: '#333',
+  btnGreenTxt: { fontFamily: F, fontSize: 7, color: '#000', letterSpacing: 1 },
+
+  statRow: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    padding: 10,
+    borderBottomWidth: 1, borderBottomColor: C.border2,
   },
-  cardValidado: { borderColor: '#27AE60' },
-  cardHeader: {
-    flexDirection: 'row', justifyContent: 'space-between',
-    alignItems: 'center', marginBottom: 20,
+  statLbl: { fontFamily: F, fontSize: 6, color: C.text2 },
+  statVal: { fontFamily: F, fontSize: 7, color: C.text },
+
+  badge: {
+    borderWidth: 1, paddingHorizontal: 6, paddingVertical: 2,
   },
-  cardCodigo: { color: '#4A90E2', fontSize: 20, fontWeight: 'bold', letterSpacing: 2 },
-  badgeValidado: {
-    backgroundColor: '#1a4a2e', borderRadius: 8,
-    paddingHorizontal: 10, paddingVertical: 4,
-    borderWidth: 1, borderColor: '#27AE60',
-  },
-  txtBadge: { color: '#27AE60', fontSize: 13, fontWeight: 'bold' },
-  infoRow: {
-    flexDirection: 'row', justifyContent: 'space-between',
-    paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#333',
-  },
-  infoLabel: { color: '#888', fontSize: 15 },
-  infoValor: { color: '#fff', fontSize: 15, fontWeight: 'bold' },
-  btnValidar: {
-    backgroundColor: '#27AE60', padding: 16,
-    borderRadius: 12, alignItems: 'center', marginTop: 20,
-  },
-  txtValidar: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+  badgeTxt: { fontFamily: F, fontSize: 5 },
 })

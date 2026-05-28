@@ -1,8 +1,9 @@
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native'
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'expo-router'
 import { doc, onSnapshot } from 'firebase/firestore'
 import { auth, db } from '@/config/firebase'
+import { C, F } from '@/constants/theme'
 
 type DadosAluno = {
   nome: string
@@ -14,12 +15,12 @@ type DadosAluno = {
   criadoEm: string
 }
 
-const todosCosmeticos: Record<string, { titulo: string; emoji: string; tipo: string }> = {
-  titulo_matematica: { titulo: 'Mestre da Matemática', emoji: '📐', tipo: 'Título' },
-  titulo_biologia: { titulo: 'Mestre da Biologia', emoji: '🧬', tipo: 'Título' },
-  titulo_historia: { titulo: 'Mestre da História', emoji: '📜', tipo: 'Título' },
-  moldura_ouro: { titulo: 'Moldura Dourada', emoji: '🥇', tipo: 'Moldura' },
-  moldura_prata: { titulo: 'Moldura Prateada', emoji: '🥈', tipo: 'Moldura' },
+const todosCosmeticos: Record<string, { nome: string; emoji: string; tipo: string }> = {
+  titulo_matematica: { nome: 'MESTRE DA MATEMATICA', emoji: '📐', tipo: 'TITULO' },
+  titulo_biologia:   { nome: 'MESTRE DA BIOLOGIA',   emoji: '🧬', tipo: 'TITULO' },
+  titulo_historia:   { nome: 'MESTRE DA HISTORIA',   emoji: '📜', tipo: 'TITULO' },
+  moldura_ouro:      { nome: 'MOLDURA DOURADA',       emoji: '🥇', tipo: 'MOLDURA' },
+  moldura_prata:     { nome: 'MOLDURA PRATEADA',      emoji: '🥈', tipo: 'MOLDURA' },
 }
 
 function calcularNivel(xp: number) {
@@ -47,164 +48,200 @@ export default function PerfilScreen() {
     return () => unsub()
   }, [])
 
-  const xpTotal = (dados?.pontosPermanentes ?? 0) + (dados?.pontosTemporarios ?? 0)
-  const { nivel, xpProximo, progresso } = calcularNivel(dados?.pontosPermanentes ?? 0)
-  const cosmetcosAluno = dados?.cosmeticosDesbloqueados ?? []
+  const xp = dados?.pontosPermanentes ?? 0
+  const { nivel, xpProximo, progresso } = calcularNivel(xp)
+  const cosmeticos = dados?.cosmeticosDesbloqueados ?? []
   const iniciais = dados?.nome?.split(' ').map(n => n[0]).slice(0, 2).join('') ?? '?'
 
   return (
     <ScrollView style={s.scroll} contentContainerStyle={s.container}>
-      <TouchableOpacity onPress={() => router.back()} style={s.btnVoltar}>
-        <Text style={s.txtVoltar}>← Voltar</Text>
-      </TouchableOpacity>
 
-      <View style={s.avatarContainer}>
-        <View style={s.avatar}>
-          <Text style={s.avatarTxt}>{iniciais}</Text>
-        </View>
-        {cosmetcosAluno.includes('moldura_ouro') && (
-          <Text style={s.moldura}>🥇</Text>
-        )}
-        {!cosmetcosAluno.includes('moldura_ouro') && cosmetcosAluno.includes('moldura_prata') && (
-          <Text style={s.moldura}>🥈</Text>
-        )}
-      </View>
+      {/* Header */}
+      <View style={s.win}>
+        <View style={s.winInner}>
+          <View style={s.winTitle}>
+            <TouchableOpacity onPress={() => router.back()}>
+              <Text style={s.backTxt}>◀ VOLTAR</Text>
+            </TouchableOpacity>
+            <Text style={s.winTitleTxt}>STATUS DO HEROI</Text>
+          </View>
 
-      <Text style={s.nome}>{dados?.nome ?? '...'}</Text>
-      <Text style={s.email}>{dados?.email ?? '...'}</Text>
-
-      {cosmetcosAluno.some(c => c.startsWith('titulo_')) && (
-        <View style={s.tituloBadge}>
-          {cosmetcosAluno.filter(c => c.startsWith('titulo_')).map(c => (
-            <Text key={c} style={s.tituloTxt}>
-              {todosCosmeticos[c]?.emoji} {todosCosmeticos[c]?.titulo}
-            </Text>
-          ))}
-        </View>
-      )}
-
-      <View style={s.nivelContainer}>
-        <View style={s.nivelHeader}>
-          <Text style={s.nivelTxt}>Nível {nivel}</Text>
-          <Text style={s.nivelMeta}>{dados?.pontosPermanentes ?? 0} / {xpProximo} XP</Text>
-        </View>
-        <View style={s.barraContainer}>
-          <View style={[s.barra, { width: `${progresso}%` }]} />
-        </View>
-        <Text style={s.nivelSub}>
-          {xpProximo - (dados?.pontosPermanentes ?? 0)} XP para o próximo nível
-        </Text>
-      </View>
-
-      <View style={s.statsRow}>
-        <View style={s.statCard}>
-          <Text style={s.statEmoji}>💎</Text>
-          <Text style={s.statValor}>{dados?.pontosPermanentes ?? 0}</Text>
-          <Text style={s.statLabel}>Cristais</Text>
-        </View>
-        <View style={s.statCard}>
-          <Text style={s.statEmoji}>⚡</Text>
-          <Text style={s.statValor}>{dados?.pontosTemporarios ?? 0}</Text>
-          <Text style={s.statLabel}>Bônus ciclo</Text>
-        </View>
-        <View style={s.statCard}>
-          <Text style={s.statEmoji}>🏆</Text>
-          <Text style={s.statValor}>{xpTotal}</Text>
-          <Text style={s.statLabel}>XP total</Text>
-        </View>
-      </View>
-
-      <Text style={s.secao}>Conquistas desbloqueadas</Text>
-
-      {cosmetcosAluno.length === 0 ? (
-        <View style={s.vazio}>
-          <Text style={s.vazioEmoji}>🔒</Text>
-          <Text style={s.vazioTxt}>Nenhuma conquista ainda</Text>
-          <Text style={s.vazioSub}>Acumule XP e visite a Loja de Conquistas</Text>
-        </View>
-      ) : (
-        cosmetcosAluno.map(c => {
-          const cosmetico = todosCosmeticos[c]
-          if (!cosmetico) return null
-          return (
-            <View key={c} style={s.conquista}>
-              <Text style={s.conquistaEmoji}>{cosmetico.emoji}</Text>
-              <View style={s.conquistaTexto}>
-                <Text style={s.conquistaTitulo}>{cosmetico.titulo}</Text>
-                <Text style={s.conquistaTipo}>{cosmetico.tipo}</Text>
-              </View>
-              <Text style={s.conquistaSelo}>✓</Text>
+          {/* Avatar + nome */}
+          <View style={s.charRow}>
+            <View style={s.avatar}>
+              <Text style={s.avatarTxt}>{iniciais}</Text>
             </View>
-          )
-        })
-      )}
+            <View style={s.charInfo}>
+              <Text style={s.charName}>{dados?.nome?.toUpperCase() ?? '...'}</Text>
+              <Text style={s.charEmail}>{dados?.email ?? '...'}</Text>
+              {cosmeticos.some(c => c.startsWith('titulo_')) && (
+                <View style={s.tituloBadge}>
+                  {cosmeticos.filter(c => c.startsWith('titulo_')).map(c => (
+                    <Text key={c} style={s.tituloTxt}>
+                      {todosCosmeticos[c]?.emoji} {todosCosmeticos[c]?.nome}
+                    </Text>
+                  ))}
+                </View>
+              )}
+            </View>
+          </View>
+        </View>
+      </View>
 
-      <Text style={s.membro}>
-        Membro desde {dados?.criadoEm
-          ? new Date(dados.criadoEm).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
-          : '...'}
-      </Text>
+      {/* Nível e progresso */}
+      <View style={s.win}>
+        <View style={s.winInner}>
+          <View style={s.winTitle}>
+            <Text style={s.winTitleTxt}>NIVEL {nivel}</Text>
+            <Text style={[s.winTitleTxt, { color: C.gold2 }]}>{xp} / {xpProximo} XP</Text>
+          </View>
+          <View style={s.nivelBody}>
+            <View style={s.progTrack}>
+              <View style={[s.progFill, { width: `${progresso}%` as any }]} />
+            </View>
+            <Text style={s.progSub}>
+              {xpProximo - xp} XP PARA O PROXIMO NIVEL
+            </Text>
+          </View>
+        </View>
+      </View>
+
+      {/* Stats */}
+      <View style={s.win}>
+        <View style={s.winInner}>
+          <View style={s.winTitle}>
+            <Text style={s.winTitleTxt}>ESTATISTICAS</Text>
+          </View>
+          <View style={s.statRow}>
+            <Text style={s.statLbl}>CRISTAIS</Text>
+            <Text style={[s.statVal, { color: C.green2 }]}>{dados?.pontosPermanentes ?? 0}</Text>
+          </View>
+          <View style={s.statRow}>
+            <Text style={s.statLbl}>BONUS CICLO</Text>
+            <Text style={[s.statVal, { color: C.purple2 }]}>{dados?.pontosTemporarios ?? 0}</Text>
+          </View>
+          <View style={s.statRow}>
+            <Text style={s.statLbl}>XP TOTAL</Text>
+            <Text style={[s.statVal, { color: C.blue2 }]}>
+              {(dados?.pontosPermanentes ?? 0) + (dados?.pontosTemporarios ?? 0)}
+            </Text>
+          </View>
+          <View style={[s.statRow, { borderBottomWidth: 0 }]}>
+            <Text style={s.statLbl}>MEMBRO DESDE</Text>
+            <Text style={[s.statVal, { color: C.text2 }]}>
+              {dados?.criadoEm
+                ? new Date(dados.criadoEm).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }).toUpperCase()
+                : '...'}
+            </Text>
+          </View>
+        </View>
+      </View>
+
+      {/* Conquistas */}
+      <View style={s.win}>
+        <View style={s.winInner}>
+          <View style={s.winTitle}>
+            <Text style={s.winTitleTxt}>CONQUISTAS</Text>
+            <Text style={[s.winTitleTxt, { color: C.text3 }]}>{cosmeticos.length} DESBLOQUEADO</Text>
+          </View>
+          {cosmeticos.length === 0 ? (
+            <View style={s.vazioBody}>
+              <Text style={s.vazioEmoji}>🔒</Text>
+              <Text style={s.vazioTxt}>NENHUMA CONQUISTA AINDA</Text>
+              <Text style={s.vazioSub}>Acumule XP e visite a loja</Text>
+            </View>
+          ) : (
+            cosmeticos.map(c => {
+              const item = todosCosmeticos[c]
+              if (!item) return null
+              return (
+                <View key={c} style={s.conquistaRow}>
+                  <Text style={s.menuCursor}>✓</Text>
+                  <Text style={s.menuIcon}>{item.emoji}</Text>
+                  <View style={s.menuBody}>
+                    <Text style={s.menuName}>{item.nome}</Text>
+                    <Text style={s.menuDesc}>{item.tipo}</Text>
+                  </View>
+                  <View style={[s.xpBadge, { borderColor: C.green }]}>
+                    <Text style={[s.xpTxt, { color: C.green2 }]}>ATIVO</Text>
+                  </View>
+                </View>
+              )
+            })
+          )}
+        </View>
+      </View>
+
     </ScrollView>
   )
 }
 
 const s = StyleSheet.create({
-  scroll: { flex: 1, backgroundColor: '#1A1A2E' },
-  container: { padding: 24, paddingTop: 60, alignItems: 'center' },
-  btnVoltar: { alignSelf: 'flex-start', marginBottom: 24 },
-  txtVoltar: { color: '#4A90E2', fontSize: 16 },
-  avatarContainer: { position: 'relative', marginBottom: 16 },
+  scroll: { flex: 1, backgroundColor: C.bg },
+  container: { padding: 12, paddingTop: 48, gap: 4 },
+
+  win: { borderWidth: 1, borderColor: C.border, backgroundColor: C.panel },
+  winInner: { borderWidth: 1, borderColor: C.border2, margin: 2 },
+  winTitle: {
+    backgroundColor: C.panel,
+    borderBottomWidth: 1, borderBottomColor: C.border,
+    paddingVertical: 5, paddingHorizontal: 8,
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+  },
+  winTitleTxt: { fontFamily: F, fontSize: 7, color: C.blue2, letterSpacing: 1 },
+  backTxt: { fontFamily: F, fontSize: 6, color: C.text3 },
+
+  charRow: { flexDirection: 'row', gap: 12, padding: 12 },
   avatar: {
-    width: 96, height: 96, borderRadius: 48,
-    backgroundColor: '#4A90E2', justifyContent: 'center', alignItems: 'center',
+    width: 56, height: 56,
+    backgroundColor: '#001428',
+    borderWidth: 1, borderColor: C.border,
+    alignItems: 'center', justifyContent: 'center',
   },
-  avatarTxt: { color: '#fff', fontSize: 36, fontWeight: 'bold' },
-  moldura: { position: 'absolute', bottom: -8, right: -8, fontSize: 28 },
-  nome: { color: '#fff', fontSize: 24, fontWeight: 'bold', marginBottom: 4 },
-  email: { color: '#888', fontSize: 14, marginBottom: 16 },
+  avatarTxt: { fontFamily: F, fontSize: 14, color: C.blue2 },
+  charInfo: { flex: 1, justifyContent: 'center' },
+  charName: { fontFamily: F, fontSize: 9, color: C.text, marginBottom: 4 },
+  charEmail: { fontFamily: F, fontSize: 5, color: C.text3, marginBottom: 6 },
   tituloBadge: {
-    backgroundColor: '#0F3460', borderRadius: 12,
-    paddingHorizontal: 16, paddingVertical: 8, marginBottom: 24,
-    borderWidth: 1, borderColor: '#4A90E2',
+    backgroundColor: '#000',
+    borderWidth: 1, borderColor: C.gold,
+    paddingHorizontal: 6, paddingVertical: 3,
   },
-  tituloTxt: { color: '#4A90E2', fontSize: 14, fontWeight: 'bold', textAlign: 'center' },
-  nivelContainer: {
-    width: '100%', backgroundColor: '#16213E', borderRadius: 16,
-    padding: 20, marginBottom: 20, borderWidth: 1, borderColor: '#333',
+  tituloTxt: { fontFamily: F, fontSize: 5, color: C.gold2 },
+
+  nivelBody: { padding: 12 },
+  progTrack: {
+    height: 8, backgroundColor: '#000',
+    borderWidth: 1, borderColor: C.border2,
+    overflow: 'hidden', marginBottom: 6,
   },
-  nivelHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 },
-  nivelTxt: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
-  nivelMeta: { color: '#888', fontSize: 14 },
-  barraContainer: {
-    height: 8, backgroundColor: '#333', borderRadius: 4, marginBottom: 8,
+  progFill: { height: '100%', backgroundColor: C.blue },
+  progSub: { fontFamily: F, fontSize: 6, color: C.text3 },
+
+  statRow: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    padding: 10,
+    borderBottomWidth: 1, borderBottomColor: C.border2,
   },
-  barra: { height: 8, backgroundColor: '#4A90E2', borderRadius: 4 },
-  nivelSub: { color: '#888', fontSize: 13 },
-  statsRow: { flexDirection: 'row', gap: 12, marginBottom: 32, width: '100%' },
-  statCard: {
-    flex: 1, backgroundColor: '#16213E', borderRadius: 16,
-    padding: 16, alignItems: 'center', borderWidth: 1, borderColor: '#333',
+  statLbl: { fontFamily: F, fontSize: 6, color: C.text2 },
+  statVal: { fontFamily: F, fontSize: 9 },
+
+  vazioBody: { padding: 20, alignItems: 'center' },
+  vazioEmoji: { fontSize: 32, marginBottom: 10 },
+  vazioTxt: { fontFamily: F, fontSize: 7, color: C.text3, marginBottom: 6 },
+  vazioSub: { fontFamily: F, fontSize: 6, color: C.text3 },
+
+  conquistaRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: C.panel,
+    borderBottomWidth: 1, borderBottomColor: C.border2,
+    padding: 10,
   },
-  statEmoji: { fontSize: 24, marginBottom: 6 },
-  statValor: { color: '#fff', fontSize: 20, fontWeight: 'bold' },
-  statLabel: { color: '#888', fontSize: 12, marginTop: 2 },
-  secao: {
-    color: '#888', fontSize: 13, marginBottom: 16, alignSelf: 'flex-start',
-    textTransform: 'uppercase', letterSpacing: 1,
-  },
-  vazio: { alignItems: 'center', paddingVertical: 32 },
-  vazioEmoji: { fontSize: 48, marginBottom: 12 },
-  vazioTxt: { color: '#888', fontSize: 16, marginBottom: 4 },
-  vazioSub: { color: '#555', fontSize: 13 },
-  conquista: {
-    width: '100%', backgroundColor: '#16213E', borderRadius: 16,
-    padding: 16, marginBottom: 12, flexDirection: 'row', alignItems: 'center',
-    borderWidth: 1, borderColor: '#27AE60',
-  },
-  conquistaEmoji: { fontSize: 32, marginRight: 16 },
-  conquistaTexto: { flex: 1 },
-  conquistaTitulo: { color: '#fff', fontSize: 15, fontWeight: 'bold' },
-  conquistaTipo: { color: '#888', fontSize: 13, marginTop: 2 },
-  conquistaSelo: { color: '#27AE60', fontSize: 20, fontWeight: 'bold' },
-  membro: { color: '#555', fontSize: 13, marginTop: 24 },
+  menuCursor: { fontFamily: F, fontSize: 8, color: C.green2, width: 10 },
+  menuIcon: { fontSize: 14, width: 20, textAlign: 'center' },
+  menuBody: { flex: 1 },
+  menuName: { fontFamily: F, fontSize: 7, color: C.text, marginBottom: 2 },
+  menuDesc: { fontFamily: F, fontSize: 5, color: C.text3 },
+  xpBadge: { borderWidth: 1, paddingHorizontal: 5, paddingVertical: 2 },
+  xpTxt: { fontFamily: F, fontSize: 5 },
 })

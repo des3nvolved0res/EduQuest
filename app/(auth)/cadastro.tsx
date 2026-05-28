@@ -1,45 +1,33 @@
-import { auth, db } from "@/config/firebase";
-import { useRouter } from "expo-router";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore";
-import { useState } from "react";
-import {
-    Alert,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
-} from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView } from 'react-native'
+import { useState } from 'react'
+import { createUserWithEmailAndPassword } from 'firebase/auth'
+import { doc, setDoc } from 'firebase/firestore'
+import { auth, db } from '@/config/firebase'
+import { useRouter } from 'expo-router'
+import { C, F } from '@/constants/theme'
 
 export default function CadastroScreen() {
-  const [perfil, setPerfil] = useState<"aluno" | "professor">("aluno");
-  const [nome, setNome] = useState("");
-  const [email, setEmail] = useState("");
-  const [senha, setSenha] = useState("");
-  const [carregando, setCarregando] = useState(false);
-  const router = useRouter();
+  const [perfil, setPerfil] = useState<'aluno' | 'professor'>('aluno')
+  const [nome, setNome] = useState('')
+  const [email, setEmail] = useState('')
+  const [senha, setSenha] = useState('')
+  const [carregando, setCarregando] = useState(false)
+  const router = useRouter()
 
   async function cadastrar() {
     if (!nome || !email || !senha) {
-      Alert.alert("Atenção", "Preencha todos os campos.");
-      return;
+      Alert.alert('ERRO', 'Preencha todos os campos.')
+      return
     }
     if (senha.length < 6) {
-      Alert.alert("Atenção", "A senha deve ter pelo menos 6 caracteres.");
-      return;
+      Alert.alert('ERRO', 'Senha deve ter pelo menos 6 caracteres.')
+      return
     }
-    setCarregando(true);
+    setCarregando(true)
     try {
-      const credencial = await createUserWithEmailAndPassword(
-        auth,
-        email,
-        senha,
-      );
-      const uid = credencial.user.uid;
-
-      await setDoc(doc(db, "usuarios", uid), {
+      const credencial = await createUserWithEmailAndPassword(auth, email, senha)
+      const uid = credencial.user.uid
+      await setDoc(doc(db, 'usuarios', uid), {
         nome,
         email,
         perfil,
@@ -47,165 +35,173 @@ export default function CadastroScreen() {
         pontosTemporarios: 0,
         nivel: 1,
         criadoEm: new Date().toISOString(),
-      });
-
-      Alert.alert("Sucesso!", "Conta criada com sucesso!", [
-        {
-          text: "Entrar",
-          onPress: () => router.replace("/(auth)/login"),
-        },
-      ]);
+      })
+      Alert.alert('SUCESSO!', 'Conta criada com sucesso!', [
+        { text: 'ENTRAR', onPress: () => router.replace('/(auth)/login') }
+      ])
     } catch (e: any) {
-      console.log("Erro Firebase:", e.code, e.message);
-      if (e.code === "auth/email-already-in-use") {
-        Alert.alert("Erro", "Este e-mail já está cadastrado.");
-      } else if (e.code === "auth/network-request-failed") {
-        Alert.alert("Erro", "Sem conexão com a internet.");
+      if (e.code === 'auth/email-already-in-use') {
+        Alert.alert('ERRO', 'Este e-mail ja esta cadastrado.')
       } else {
-        Alert.alert("Erro", e.message);
+        Alert.alert('ERRO', 'Nao foi possivel criar a conta.')
       }
     }
-    setCarregando(false);
+    setCarregando(false)
   }
 
   return (
-    <ScrollView contentContainerStyle={s.container}>
-      <Text style={s.logo}>EduQuest</Text>
-      <Text style={s.subtitulo}>Crie sua conta</Text>
+    <ScrollView style={s.scroll} contentContainerStyle={s.container}>
 
-      <View style={s.seletor}>
-        <TouchableOpacity
-          style={[s.btnPerfil, perfil === "aluno" && s.btnPerfilAtivo]}
-          onPress={() => setPerfil("aluno")}
-        >
-          <Text style={[s.txtPerfil, perfil === "aluno" && s.txtPerfilAtivo]}>
-            👤 Aluno
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[s.btnPerfil, perfil === "professor" && s.btnPerfilAtivo]}
-          onPress={() => setPerfil("professor")}
-        >
-          <Text
-            style={[s.txtPerfil, perfil === "professor" && s.txtPerfilAtivo]}
-          >
-            📖 Professor
-          </Text>
-        </TouchableOpacity>
+      <View style={s.win}>
+        <View style={s.winInner}>
+          <View style={s.winTitle}>
+            <TouchableOpacity onPress={() => router.back()}>
+              <Text style={s.backTxt}>◀ VOLTAR</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={s.titleBody}>
+            <Text style={s.logo}>EDUQUEST</Text>
+            <Text style={s.logoSub}>REGISTRAR NOVO HEROI</Text>
+          </View>
+        </View>
       </View>
 
-      <TextInput
-        style={s.input}
-        placeholder="Nome completo"
-        placeholderTextColor="#888"
-        value={nome}
-        onChangeText={setNome}
-      />
-      <TextInput
-        style={s.input}
-        placeholder="E-mail"
-        placeholderTextColor="#888"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
-      <TextInput
-        style={s.input}
-        placeholder="Senha (mínimo 6 caracteres)"
-        placeholderTextColor="#888"
-        value={senha}
-        onChangeText={setSenha}
-        secureTextEntry
-      />
+      <View style={s.win}>
+        <View style={s.winInner}>
+          <View style={s.winTitle}>
+            <Text style={s.winTitleTxt}>TIPO DE CONTA</Text>
+          </View>
+          <View style={s.toggle}>
+            <TouchableOpacity
+              style={[s.toggleBtn, perfil === 'aluno' && s.toggleBtnOn]}
+              onPress={() => setPerfil('aluno')}
+            >
+              <Text style={[s.toggleTxt, perfil === 'aluno' && s.toggleTxtOn]}>
+                ★ ALUNO
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[s.toggleBtn, perfil === 'professor' && s.toggleBtnOn]}
+              onPress={() => setPerfil('professor')}
+            >
+              <Text style={[s.toggleTxt, perfil === 'professor' && s.toggleTxtOn]}>
+                ◆ PROFESSOR
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
 
-      <TouchableOpacity
-        style={s.btnCadastrar}
-        onPress={cadastrar}
-        disabled={carregando}
-      >
-        <Text style={s.txtBotao}>
-          {carregando ? "Criando conta..." : "Criar conta"}
-        </Text>
-      </TouchableOpacity>
+      <View style={s.win}>
+        <View style={s.winInner}>
+          <View style={s.winTitle}>
+            <Text style={s.winTitleTxt}>DADOS DO HEROI</Text>
+          </View>
+          <View style={s.formBody}>
+            <Text style={s.label}>NOME COMPLETO</Text>
+            <TextInput
+              style={s.input}
+              value={nome}
+              onChangeText={setNome}
+              placeholder="Seu nome..."
+              placeholderTextColor={C.text3}
+            />
+            <Text style={s.label}>E-MAIL</Text>
+            <TextInput
+              style={s.input}
+              value={email}
+              onChangeText={setEmail}
+              placeholder="seu@email.com"
+              placeholderTextColor={C.text3}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+            <Text style={s.label}>SENHA (MIN. 6 CARACTERES)</Text>
+            <TextInput
+              style={s.input}
+              value={senha}
+              onChangeText={setSenha}
+              placeholder="••••••••"
+              placeholderTextColor={C.text3}
+              secureTextEntry
+            />
+          </View>
+        </View>
+      </View>
 
-      <TouchableOpacity onPress={() => router.back()}>
-        <Text style={s.linkVoltar}>← Voltar para o login</Text>
-      </TouchableOpacity>
+      <View style={s.win}>
+        <View style={s.winInner}>
+          <TouchableOpacity
+            style={s.btnBlue}
+            onPress={cadastrar}
+            disabled={carregando}
+            activeOpacity={0.8}
+          >
+            <Text style={s.btnBlueTxt}>
+              {carregando ? 'CRIANDO CONTA...' : '▶ CRIAR CONTA'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
     </ScrollView>
-  );
+  )
 }
 
 const s = StyleSheet.create({
-  container: {
-    flexGrow: 1,
-    backgroundColor: "#1A1A2E",
-    padding: 24,
-    justifyContent: "center",
+  scroll: { flex: 1, backgroundColor: C.bg },
+  container: { padding: 12, paddingTop: 48, gap: 4 },
+
+  win: { borderWidth: 1, borderColor: C.border, backgroundColor: C.panel },
+  winInner: { borderWidth: 1, borderColor: C.border2, margin: 2 },
+  winTitle: {
+    backgroundColor: C.panel,
+    borderBottomWidth: 1,
+    borderBottomColor: C.border,
+    paddingVertical: 5,
+    paddingHorizontal: 8,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
-  logo: {
-    fontSize: 42,
-    fontWeight: "bold",
-    color: "#4A90E2",
-    textAlign: "center",
-    marginBottom: 8,
+  winTitleTxt: { fontFamily: F, fontSize: 7, color: C.blue2, letterSpacing: 1 },
+  backTxt: { fontFamily: F, fontSize: 6, color: C.text3 },
+
+  titleBody: { padding: 14, alignItems: 'center' },
+  logo: { fontFamily: F, fontSize: 16, color: C.blue2, letterSpacing: 3, marginBottom: 6 },
+  logoSub: { fontFamily: F, fontSize: 6, color: C.text3, letterSpacing: 2 },
+
+  toggle: { flexDirection: 'row' },
+  toggleBtn: {
+    flex: 1, paddingVertical: 10,
+    alignItems: 'center', backgroundColor: C.bg,
   },
-  subtitulo: {
-    fontSize: 16,
-    color: "#888",
-    textAlign: "center",
-    marginBottom: 32,
-  },
-  seletor: {
-    flexDirection: "row",
-    marginBottom: 24,
-    borderRadius: 12,
-    overflow: "hidden",
-    borderWidth: 1,
-    borderColor: "#333",
-  },
-  btnPerfil: {
-    flex: 1,
-    padding: 14,
-    alignItems: "center",
-    backgroundColor: "#16213E",
-  },
-  btnPerfilAtivo: {
-    backgroundColor: "#4A90E2",
-  },
-  txtPerfil: {
-    color: "#888",
-    fontSize: 15,
-    fontWeight: "bold",
-  },
-  txtPerfilAtivo: {
-    color: "#fff",
-  },
+  toggleBtnOn: { backgroundColor: C.blue },
+  toggleTxt: { fontFamily: F, fontSize: 7, color: C.text3, letterSpacing: 1 },
+  toggleTxtOn: { color: '#000' },
+
+  formBody: { padding: 12 },
+  label: { fontFamily: F, fontSize: 6, color: C.text2, letterSpacing: 1, marginBottom: 6 },
   input: {
-    backgroundColor: "#16213E",
-    borderRadius: 12,
-    padding: 16,
-    color: "#fff",
-    fontSize: 16,
-    marginBottom: 16,
+    backgroundColor: C.bg,
     borderWidth: 1,
-    borderColor: "#333",
+    borderColor: C.border,
+    padding: 10,
+    color: C.text,
+    fontFamily: F,
+    fontSize: 8,
+    marginBottom: 14,
   },
-  btnCadastrar: {
-    backgroundColor: "#4A90E2",
-    padding: 18,
-    borderRadius: 12,
-    alignItems: "center",
-    marginBottom: 16,
+
+  btnBlue: {
+    backgroundColor: C.blue,
+    borderTopWidth: 2, borderLeftWidth: 2,
+    borderBottomWidth: 2, borderRightWidth: 2,
+    borderTopColor: C.blue2, borderLeftColor: C.blue2,
+    borderBottomColor: '#112266', borderRightColor: '#112266',
+    paddingVertical: 14,
+    alignItems: 'center',
+    margin: 8,
   },
-  txtBotao: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-  linkVoltar: {
-    color: "#4A90E2",
-    textAlign: "center",
-    fontSize: 15,
-  },
-});
+  btnBlueTxt: { fontFamily: F, fontSize: 8, color: '#000', letterSpacing: 1 },
+})

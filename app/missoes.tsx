@@ -1,25 +1,26 @@
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'expo-router'
-import { collection, addDoc, getDocs, query, orderBy } from 'firebase/firestore'
+import { collection, addDoc, getDocs } from 'firebase/firestore'
 import { auth, db } from '@/config/firebase'
+import { C, F } from '@/constants/theme'
 
 const materias = [
-  { id: 'matematica', titulo: 'Matemática', emoji: '📐' },
-  { id: 'portugues', titulo: 'Português', emoji: '📝' },
-  { id: 'biologia', titulo: 'Biologia', emoji: '🧬' },
-  { id: 'historia', titulo: 'História', emoji: '📜' },
-  { id: 'geografia', titulo: 'Geografia', emoji: '🌍' },
-  { id: 'fisica', titulo: 'Física', emoji: '⚡' },
-  { id: 'quimica', titulo: 'Química', emoji: '🧪' },
-  { id: 'ingles', titulo: 'Inglês', emoji: '🌐' },
+  { id: 'matematica', nome: 'MATEMATICA', emoji: '📐' },
+  { id: 'portugues',  nome: 'PORTUGUES',  emoji: '📝' },
+  { id: 'biologia',   nome: 'BIOLOGIA',   emoji: '🧬' },
+  { id: 'historia',   nome: 'HISTORIA',   emoji: '📜' },
+  { id: 'geografia',  nome: 'GEOGRAFIA',  emoji: '🌍' },
+  { id: 'fisica',     nome: 'FISICA',     emoji: '⚡' },
+  { id: 'quimica',    nome: 'QUIMICA',    emoji: '🧪' },
+  { id: 'ingles',     nome: 'INGLES',     emoji: '🌐' },
 ]
 
 type Missao = {
   id: string
   titulo: string
-  materia: string
   nomeMateria: string
+  emojiMateria: string
   bonusXP: number
   criadoEm: string
 }
@@ -27,7 +28,7 @@ type Missao = {
 export default function MissoesScreen() {
   const router = useRouter()
   const [titulo, setTitulo] = useState('')
-  const [materiaSelecionada, setMateriaSelecionada] = useState<string | null>(null)
+  const [materiaSel, setMateriaSel] = useState<string | null>(null)
   const [bonusXP, setBonusXP] = useState(20)
   const [missoes, setMissoes] = useState<Missao[]>([])
   const [salvando, setSalvando] = useState(false)
@@ -41,196 +42,235 @@ export default function MissoesScreen() {
         lista.sort((a, b) => new Date(b.criadoEm).getTime() - new Date(a.criadoEm).getTime())
         setMissoes(lista)
       } catch (e) {
-        console.log('Erro ao carregar missões:', e)
+        console.log('Erro:', e)
       }
     }
     carregar()
   }, [])
 
-  async function lancarMissao() {
-    if (!titulo.trim()) {
-      Alert.alert('Atenção', 'Digite o título da missão.')
-      return
-    }
-    if (!materiaSelecionada) {
-      Alert.alert('Atenção', 'Selecione uma matéria.')
-      return
-    }
+  async function lancar() {
+    if (!titulo.trim()) { Alert.alert('ERRO', 'Digite o titulo da missao.'); return }
+    if (!materiaSel) { Alert.alert('ERRO', 'Selecione uma materia.'); return }
     setSalvando(true)
     try {
-      const materia = materias.find(m => m.id === materiaSelecionada)
+      const materia = materias.find(m => m.id === materiaSel)
       const nova = {
-        titulo: titulo.trim(),
-        materia: materiaSelecionada,
-        nomeMateria: materia?.titulo,
+        titulo: titulo.trim().toUpperCase(),
+        materia: materiaSel,
+        nomeMateria: materia?.nome,
         emojiMateria: materia?.emoji,
         bonusXP,
         professorId: auth.currentUser?.uid,
         criadoEm: new Date().toISOString(),
       }
-      const docRef = await addDoc(collection(db, 'missoes'), nova)
-      setMissoes(prev => [{ id: docRef.id, ...nova } as Missao, ...prev])
+      const ref = await addDoc(collection(db, 'missoes'), nova)
+      setMissoes(prev => [{ id: ref.id, ...nova } as Missao, ...prev])
       setTitulo('')
-      setMateriaSelecionada(null)
+      setMateriaSel(null)
       setBonusXP(20)
-      Alert.alert('✓ Missão lançada!', 'Os alunos serão notificados.')
-    } catch (e) {
-      Alert.alert('Erro', 'Não foi possível lançar a missão.')
+      Alert.alert('MISSAO LANCADA!', 'Os aventureiros foram notificados.')
+    } catch {
+      Alert.alert('ERRO', 'Nao foi possivel lancar a missao.')
     }
     setSalvando(false)
   }
 
   return (
     <ScrollView style={s.scroll} contentContainerStyle={s.container}>
-      <TouchableOpacity onPress={() => router.back()} style={s.btnVoltar}>
-        <Text style={s.txtVoltar}>← Voltar</Text>
-      </TouchableOpacity>
 
-      <Text style={s.titulo}>Missões especiais</Text>
+      {/* Header */}
+      <View style={s.win}>
+        <View style={s.winInner}>
+          <View style={s.winTitle}>
+            <TouchableOpacity onPress={() => router.back()}>
+              <Text style={s.backTxt}>◀ VOLTAR</Text>
+            </TouchableOpacity>
+            <Text style={s.winTitleTxt}>⚔️ MISSOES ESPECIAIS</Text>
+          </View>
+        </View>
+      </View>
 
-      <View style={s.form}>
-        <Text style={s.secao}>Título da missão</Text>
-        <TextInput
-          style={s.input}
-          placeholder="Ex: Equações do 2º Grau"
-          placeholderTextColor="#888"
-          value={titulo}
-          onChangeText={setTitulo}
-        />
+      {/* Título */}
+      <View style={s.win}>
+        <View style={s.winInner}>
+          <View style={s.winTitle}>
+            <Text style={s.winTitleTxt}>TITULO DA MISSAO</Text>
+          </View>
+          <View style={s.inputBody}>
+            <TextInput
+              style={s.input}
+              value={titulo}
+              onChangeText={t => setTitulo(t.toUpperCase())}
+              placeholder="EX: EQUACOES DO 2 GRAU"
+              placeholderTextColor={C.text3}
+              autoCapitalize="characters"
+            />
+          </View>
+        </View>
+      </View>
 
-        <Text style={s.secao}>Matéria</Text>
-        <View style={s.materiasGrade}>
+      {/* Matéria */}
+      <View style={s.win}>
+        <View style={s.winInner}>
+          <View style={s.winTitle}>
+            <Text style={s.winTitleTxt}>MATERIA</Text>
+          </View>
           {materias.map((m) => (
             <TouchableOpacity
               key={m.id}
-              style={[s.materiaBtn, materiaSelecionada === m.id && s.materiaBtnAtivo]}
-              onPress={() => setMateriaSelecionada(m.id)}
+              style={[s.menuRow, materiaSel === m.id && s.menuRowSel]}
+              onPress={() => setMateriaSel(m.id)}
+              activeOpacity={0.8}
             >
-              <Text style={s.materiaEmoji}>{m.emoji}</Text>
-              <Text style={[s.materiaTxt, materiaSelecionada === m.id && s.materiaTxtAtivo]}>
-                {m.titulo}
-              </Text>
+              <Text style={s.menuCursor}>{materiaSel === m.id ? '▶' : ' '}</Text>
+              <Text style={s.menuIcon}>{m.emoji}</Text>
+              <Text style={s.menuName}>{m.nome}</Text>
             </TouchableOpacity>
           ))}
         </View>
-
-        <Text style={s.secao}>Bônus de XP</Text>
-        <View style={s.quantidadeRow}>
-          <TouchableOpacity
-            style={s.btnQtd}
-            onPress={() => setBonusXP(q => Math.max(10, q - 10))}
-          >
-            <Text style={s.txtQtd}>−</Text>
-          </TouchableOpacity>
-          <View style={s.qtdDisplay}>
-            <Text style={s.qtdValor}>{bonusXP}</Text>
-            <Text style={s.qtdLabel}>XP bônus</Text>
-          </View>
-          <TouchableOpacity
-            style={s.btnQtd}
-            onPress={() => setBonusXP(q => Math.min(100, q + 10))}
-          >
-            <Text style={s.txtQtd}>+</Text>
-          </TouchableOpacity>
-        </View>
-
-        <TouchableOpacity
-          style={[s.btnLancar, salvando && { opacity: 0.6 }]}
-          onPress={lancarMissao}
-          disabled={salvando}
-        >
-          <Text style={s.txtLancar}>
-            {salvando ? 'Lançando...' : '⚔️ Lançar missão'}
-          </Text>
-        </TouchableOpacity>
       </View>
 
+      {/* Bônus XP */}
+      <View style={s.win}>
+        <View style={s.winInner}>
+          <View style={s.winTitle}>
+            <Text style={s.winTitleTxt}>BONUS DE XP</Text>
+          </View>
+          <View style={s.qtdRow}>
+            <TouchableOpacity
+              style={s.qtdBtn}
+              onPress={() => setBonusXP(q => Math.max(10, q - 10))}
+            >
+              <Text style={s.qtdBtnTxt}>−</Text>
+            </TouchableOpacity>
+            <View style={s.qtdDisplay}>
+              <Text style={s.qtdVal}>{bonusXP}</Text>
+              <Text style={s.qtdLbl}>XP BONUS</Text>
+            </View>
+            <TouchableOpacity
+              style={s.qtdBtn}
+              onPress={() => setBonusXP(q => Math.min(100, q + 10))}
+            >
+              <Text style={s.qtdBtnTxt}>+</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+
+      {/* Botão lançar */}
+      <View style={s.win}>
+        <View style={s.winInner}>
+          <TouchableOpacity
+            style={[s.btnPurple, salvando && { opacity: 0.6 }]}
+            onPress={lancar}
+            disabled={salvando}
+            activeOpacity={0.8}
+          >
+            <Text style={s.btnPurpleTxt}>
+              {salvando ? 'LANCANDO...' : '⚔️ LANCAR MISSAO'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Missões ativas */}
       {missoes.length > 0 && (
-        <>
-          <Text style={s.secao}>Missões ativas</Text>
-          {missoes.map((missao) => (
-            <View key={missao.id} style={s.missaoCard}>
-              <View style={s.missaoHeader}>
-                <Text style={s.missaoTitulo}>{missao.titulo}</Text>
-                <View style={s.xpBadge}>
-                  <Text style={s.xpTxt}>+{missao.bonusXP} XP</Text>
+        <View style={s.win}>
+          <View style={s.winInner}>
+            <View style={s.winTitle}>
+              <Text style={s.winTitleTxt}>MISSOES ATIVAS</Text>
+              <Text style={[s.winTitleTxt, { color: C.text3 }]}>{missoes.length} TOTAL</Text>
+            </View>
+            {missoes.map((m) => (
+              <View key={m.id} style={s.missaoRow}>
+                <Text style={s.missaoCursor}>◆</Text>
+                <Text style={s.missaoIcon}>{m.emojiMateria}</Text>
+                <View style={s.missaoInfo}>
+                  <Text style={s.missaoTitulo}>{m.titulo}</Text>
+                  <Text style={s.missaoMat}>{m.nomeMateria} · {new Date(m.criadoEm).toLocaleDateString('pt-BR')}</Text>
+                </View>
+                <View style={[s.xpBadge, { borderColor: C.purple }]}>
+                  <Text style={[s.xpTxt, { color: C.purple2 }]}>+{m.bonusXP}XP</Text>
                 </View>
               </View>
-              <Text style={s.missaoMateria}>{missao.nomeMateria}</Text>
-              <Text style={s.missaoData}>
-                {new Date(missao.criadoEm).toLocaleDateString('pt-BR')}
-              </Text>
-            </View>
-          ))}
-        </>
+            ))}
+          </View>
+        </View>
       )}
+
     </ScrollView>
   )
 }
 
 const s = StyleSheet.create({
-  scroll: { flex: 1, backgroundColor: '#1A1A2E' },
-  container: { padding: 24, paddingTop: 60 },
-  btnVoltar: { marginBottom: 24 },
-  txtVoltar: { color: '#4A90E2', fontSize: 16 },
-  titulo: { color: '#fff', fontSize: 28, fontWeight: 'bold', marginBottom: 24 },
-  form: {
-    backgroundColor: '#16213E', borderRadius: 16,
-    padding: 20, marginBottom: 24,
-    borderWidth: 1, borderColor: '#333',
+  scroll: { flex: 1, backgroundColor: C.bg },
+  container: { padding: 12, paddingTop: 48, gap: 4 },
+
+  win: { borderWidth: 1, borderColor: C.border, backgroundColor: C.panel },
+  winInner: { borderWidth: 1, borderColor: C.border2, margin: 2 },
+  winTitle: {
+    backgroundColor: C.panel,
+    borderBottomWidth: 1, borderBottomColor: C.border,
+    paddingVertical: 5, paddingHorizontal: 8,
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
   },
-  secao: {
-    color: '#888', fontSize: 13, marginBottom: 12,
-    textTransform: 'uppercase', letterSpacing: 1,
-  },
+  winTitleTxt: { fontFamily: F, fontSize: 7, color: C.blue2, letterSpacing: 1 },
+  backTxt: { fontFamily: F, fontSize: 6, color: C.text3 },
+
+  inputBody: { padding: 10 },
   input: {
-    backgroundColor: '#1A1A2E', borderRadius: 12,
-    padding: 16, color: '#fff', fontSize: 16,
-    marginBottom: 24, borderWidth: 1, borderColor: '#333',
+    backgroundColor: C.bg,
+    borderWidth: 1, borderColor: C.border,
+    padding: 10, color: C.text,
+    fontFamily: F, fontSize: 8,
+    letterSpacing: 1,
   },
-  materiasGrade: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 24 },
-  materiaBtn: {
-    width: '22%', padding: 10, borderRadius: 12,
-    backgroundColor: '#1A1A2E', alignItems: 'center',
-    borderWidth: 1, borderColor: '#333',
+
+  menuRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: C.panel,
+    borderBottomWidth: 1, borderBottomColor: C.border2,
+    padding: 10,
   },
-  materiaBtnAtivo: { borderColor: '#8E44AD', backgroundColor: '#2d1a4a' },
-  materiaEmoji: { fontSize: 22, marginBottom: 4 },
-  materiaTxt: { color: '#888', fontSize: 11, textAlign: 'center' },
-  materiaTxtAtivo: { color: '#8E44AD' },
-  quantidadeRow: {
+  menuRowSel: { backgroundColor: C.sel, borderBottomColor: C.border },
+  menuCursor: { fontFamily: F, fontSize: 8, color: C.gold2, width: 10 },
+  menuIcon: { fontSize: 14, width: 20, textAlign: 'center' },
+  menuName: { flex: 1, fontFamily: F, fontSize: 7, color: C.text },
+
+  qtdRow: {
     flexDirection: 'row', alignItems: 'center',
-    justifyContent: 'center', gap: 24, marginBottom: 24,
+    justifyContent: 'center', gap: 24, padding: 14,
   },
-  btnQtd: {
-    width: 44, height: 44, borderRadius: 22,
-    backgroundColor: '#1A1A2E', justifyContent: 'center',
-    alignItems: 'center', borderWidth: 1, borderColor: '#333',
+  qtdBtn: {
+    width: 36, height: 36, backgroundColor: '#000',
+    borderWidth: 1, borderColor: C.border,
+    alignItems: 'center', justifyContent: 'center',
   },
-  txtQtd: { color: '#fff', fontSize: 22 },
+  qtdBtnTxt: { fontFamily: F, fontSize: 14, color: C.text },
   qtdDisplay: { alignItems: 'center' },
-  qtdValor: { color: '#fff', fontSize: 36, fontWeight: 'bold' },
-  qtdLabel: { color: '#888', fontSize: 14 },
-  btnLancar: {
-    backgroundColor: '#8E44AD', padding: 18,
-    borderRadius: 16, alignItems: 'center',
+  qtdVal: { fontFamily: F, fontSize: 24, color: C.text },
+  qtdLbl: { fontFamily: F, fontSize: 6, color: C.text3 },
+
+  btnPurple: {
+    backgroundColor: C.purple,
+    borderTopWidth: 2, borderLeftWidth: 2,
+    borderBottomWidth: 2, borderRightWidth: 2,
+    borderTopColor: C.purple2, borderLeftColor: C.purple2,
+    borderBottomColor: '#330066', borderRightColor: '#330066',
+    paddingVertical: 14, alignItems: 'center', margin: 8,
   },
-  txtLancar: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
-  missaoCard: {
-    backgroundColor: '#16213E', borderRadius: 16, padding: 16,
-    marginBottom: 12, borderWidth: 1, borderColor: '#333',
+  btnPurpleTxt: { fontFamily: F, fontSize: 8, color: '#000', letterSpacing: 1 },
+
+  missaoRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    padding: 10,
+    borderBottomWidth: 1, borderBottomColor: C.border2,
   },
-  missaoHeader: {
-    flexDirection: 'row', justifyContent: 'space-between',
-    alignItems: 'center', marginBottom: 8,
-  },
-  missaoTitulo: { color: '#fff', fontSize: 15, fontWeight: 'bold', flex: 1 },
-  xpBadge: {
-    backgroundColor: '#2d1a4a', borderRadius: 8,
-    paddingHorizontal: 10, paddingVertical: 4,
-    borderWidth: 1, borderColor: '#8E44AD',
-  },
-  xpTxt: { color: '#8E44AD', fontSize: 13, fontWeight: 'bold' },
-  missaoMateria: { color: '#888', fontSize: 13, marginBottom: 4 },
-  missaoData: { color: '#555', fontSize: 12 },
+  missaoCursor: { fontFamily: F, fontSize: 8, color: C.purple2, width: 10 },
+  missaoIcon: { fontSize: 14, width: 20, textAlign: 'center' },
+  missaoInfo: { flex: 1 },
+  missaoTitulo: { fontFamily: F, fontSize: 7, color: C.text, marginBottom: 2 },
+  missaoMat: { fontFamily: F, fontSize: 5, color: C.text3 },
+  xpBadge: { borderWidth: 1, paddingHorizontal: 5, paddingVertical: 2 },
+  xpTxt: { fontFamily: F, fontSize: 5 },
 })

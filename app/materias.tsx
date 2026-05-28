@@ -1,129 +1,157 @@
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native'
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native'
 import { useRouter, useLocalSearchParams } from 'expo-router'
 import { useEffect, useState } from 'react'
+import { C, F } from '@/constants/theme'
 
 const materias = [
-  { id: 'matematica', titulo: 'Matemática', emoji: '📐', cor: '#4A90E2' },
-  { id: 'portugues', titulo: 'Português', emoji: '📝', cor: '#E74C3C' },
-  { id: 'biologia', titulo: 'Biologia', emoji: '🧬', cor: '#27AE60' },
-  { id: 'historia', titulo: 'História', emoji: '📜', cor: '#E67E22' },
-  { id: 'geografia', titulo: 'Geografia', emoji: '🌍', cor: '#1ABC9C' },
-  { id: 'fisica', titulo: 'Física', emoji: '⚡', cor: '#9B59B6' },
-  { id: 'quimica', titulo: 'Química', emoji: '🧪', cor: '#E91E63' },
-  { id: 'ingles', titulo: 'Inglês', emoji: '🌐', cor: '#FF9800' },
+  { id: 'matematica', nome: 'MATEMATICA', icon: '📐', cor: C.blue },
+  { id: 'portugues',  nome: 'PORTUGUES',  icon: '📝', cor: C.purple },
+  { id: 'biologia',   nome: 'BIOLOGIA',   icon: '🧬', cor: C.green },
+  { id: 'historia',   nome: 'HISTORIA',   icon: '📜', cor: C.gold },
+  { id: 'geografia',  nome: 'GEOGRAFIA',  icon: '🌍', cor: C.teal },
+  { id: 'fisica',     nome: 'FISICA',     icon: '⚡', cor: C.gold2 },
+  { id: 'quimica',    nome: 'QUIMICA',    icon: '🧪', cor: C.red },
+  { id: 'ingles',     nome: 'INGLES',     icon: '🌐', cor: C.blue2 },
 ]
 
 const nomePortal: Record<string, string> = {
-  reliquias: '💎 Portal das Relíquias',
-  ciclos: '⏳ Portal dos Ciclos',
-  mural: '📜 Mural do Mestre',
+  reliquias: 'PORTAL DAS RELIQUIAS',
+  ciclos:    'PORTAL DOS CICLOS',
+  mural:     'MURAL DO MESTRE',
 }
 
 function calcularDiasRestantes() {
   const agora = new Date()
   const fimDoMes = new Date(agora.getFullYear(), agora.getMonth() + 1, 0)
-  const diff = fimDoMes.getTime() - agora.getTime()
-  return Math.ceil(diff / (1000 * 60 * 60 * 24))
+  return Math.ceil((fimDoMes.getTime() - agora.getTime()) / (1000 * 60 * 60 * 24))
 }
 
 export default function MateriasScreen() {
   const router = useRouter()
   const { portal } = useLocalSearchParams<{ portal: string }>()
-  const [diasRestantes, setDiasRestantes] = useState(calcularDiasRestantes())
-
-  useEffect(() => {
-    const intervalo = setInterval(() => {
-      setDiasRestantes(calcularDiasRestantes())
-    }, 60000)
-    return () => clearInterval(intervalo)
-  }, [])
+  const [sel, setSel] = useState(0)
+  const dias = calcularDiasRestantes()
 
   return (
     <ScrollView style={s.scroll} contentContainerStyle={s.container}>
-      <TouchableOpacity onPress={() => router.back()} style={s.btnVoltar}>
-        <Text style={s.txtVoltar}>← Voltar</Text>
-      </TouchableOpacity>
 
-      <Text style={s.portalNome}>{nomePortal[portal] ?? 'Portal'}</Text>
-      <Text style={s.titulo}>Escolha a matéria</Text>
+      {/* Janela título */}
+      <View style={s.win}>
+        <View style={s.winInner}>
+          <View style={s.winTitle}>
+            <TouchableOpacity onPress={() => router.back()}>
+              <Text style={s.backTxt}>◀ VOLTAR</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={s.titleBody}>
+            <Text style={s.portalName}>{nomePortal[portal] ?? 'PORTAL'}</Text>
+            <Text style={s.selectTxt}>SELECIONE A DISCIPLINA</Text>
+          </View>
+        </View>
+      </View>
 
+      {/* Contador ciclos */}
       {portal === 'ciclos' && (
-        <View style={s.contador}>
-          <Text style={s.contadorEmoji}>⏳</Text>
-          <View>
-            <Text style={s.contadorTitulo}>
-              {diasRestantes === 1
-                ? 'Falta 1 dia para o fim do ciclo!'
-                : `Faltam ${diasRestantes} dias para o fim do ciclo`}
-            </Text>
-            <Text style={s.contadorSub}>
-              Os pontos temporários expiram no final do mês
-            </Text>
+        <View style={s.win}>
+          <View style={s.winInner}>
+            <View style={s.counterRow}>
+              <Text style={s.counterIcon}>⏳</Text>
+              <View style={s.counterInfo}>
+                <Text style={s.counterTitle}>
+                  {dias === 1 ? 'FALTA 1 DIA PARA O FIM DO CICLO!' : `FALTAM ${dias} DIAS PARA O FIM DO CICLO`}
+                </Text>
+                <Text style={s.counterSub}>Pontos temporarios expiram no fim do mes</Text>
+              </View>
+            </View>
           </View>
         </View>
       )}
 
-      <View style={s.grade}>
-        {materias.map((materia) => (
-          <TouchableOpacity
-            key={materia.id}
-            style={[s.card, { borderTopColor: materia.cor }]}
-            onPress={() => router.push(`/topicos?portal=${portal}&materia=${materia.id}`)}
-          >
-            <Text style={s.emoji}>{materia.emoji}</Text>
-            <Text style={s.cardTitulo}>{materia.titulo}</Text>
-            {portal === 'ciclos' && (
-              <View style={[s.xpBadge, { backgroundColor: '#2d1a00' }]}>
-                <Text style={[s.xpTexto, { color: '#E67E22' }]}>⚡ Bônus</Text>
+      {/* Lista de matérias */}
+      <View style={s.win}>
+        <View style={s.winInner}>
+          <View style={s.winTitle}>
+            <Text style={s.winTitleTxt}>DISCIPLINAS</Text>
+          </View>
+          {materias.map((m, i) => (
+            <TouchableOpacity
+              key={m.id}
+              style={[s.menuRow, sel === i && s.menuRowSel]}
+              onPress={() => {
+                setSel(i)
+                router.push(`/topicos?portal=${portal}&materia=${m.id}`)
+              }}
+              activeOpacity={0.8}
+            >
+              <Text style={s.menuCursor}>{sel === i ? '▶' : ' '}</Text>
+              <Text style={s.menuIcon}>{m.icon}</Text>
+              <View style={s.menuBody}>
+                <Text style={s.menuName}>{m.nome}</Text>
               </View>
-            )}
-            {portal !== 'ciclos' && (
-              <View style={s.xpBadge}>
-                <Text style={s.xpTexto}>0 XP</Text>
+              <View style={[s.xpBadge, { borderColor: m.cor }]}>
+                <Text style={[s.xpTxt, { color: m.cor }]}>0 XP</Text>
               </View>
-            )}
-          </TouchableOpacity>
-        ))}
+            </TouchableOpacity>
+          ))}
+        </View>
       </View>
+
     </ScrollView>
   )
 }
 
 const s = StyleSheet.create({
-  scroll: { flex: 1, backgroundColor: '#1A1A2E' },
-  container: { padding: 24, paddingTop: 60 },
-  btnVoltar: { marginBottom: 24 },
-  txtVoltar: { color: '#4A90E2', fontSize: 16 },
-  portalNome: {
-    color: '#888', fontSize: 13, marginBottom: 8,
-    textTransform: 'uppercase', letterSpacing: 1,
+  scroll: { flex: 1, backgroundColor: C.bg },
+  container: { padding: 12, paddingTop: 48, gap: 4 },
+
+  win: { borderWidth: 1, borderColor: C.border, backgroundColor: C.panel },
+  winInner: { borderWidth: 1, borderColor: C.border2, margin: 2 },
+  winTitle: {
+    backgroundColor: C.panel,
+    borderBottomWidth: 1,
+    borderBottomColor: C.border,
+    paddingVertical: 5,
+    paddingHorizontal: 8,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
-  titulo: { color: '#fff', fontSize: 28, fontWeight: 'bold', marginBottom: 24 },
-  contador: {
-    backgroundColor: '#2d1a00', borderRadius: 16, padding: 16,
-    marginBottom: 24, flexDirection: 'row', alignItems: 'center',
-    borderWidth: 1, borderColor: '#E67E22', gap: 12,
+  winTitleTxt: { fontFamily: F, fontSize: 7, color: C.blue2, letterSpacing: 1 },
+  backTxt: { fontFamily: F, fontSize: 6, color: C.text3 },
+
+  titleBody: { padding: 10 },
+  portalName: { fontFamily: F, fontSize: 8, color: C.gold2, marginBottom: 6 },
+  selectTxt: { fontFamily: F, fontSize: 6, color: C.text3 },
+
+  counterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    padding: 10,
   },
-  contadorEmoji: { fontSize: 28 },
-  contadorTitulo: { color: '#E67E22', fontSize: 15, fontWeight: 'bold', marginBottom: 4 },
-  contadorSub: { color: '#888', fontSize: 13 },
-  grade: {
-    flexDirection: 'row', flexWrap: 'wrap',
-    gap: 16, justifyContent: 'space-between',
+  counterIcon: { fontSize: 20 },
+  counterInfo: { flex: 1 },
+  counterTitle: { fontFamily: F, fontSize: 6, color: C.gold2, marginBottom: 4 },
+  counterSub: { fontFamily: F, fontSize: 5, color: C.text3 },
+
+  menuRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: C.panel,
+    borderBottomWidth: 1,
+    borderBottomColor: C.border2,
+    padding: 10,
   },
-  card: {
-    backgroundColor: '#16213E', borderRadius: 16, padding: 20,
-    width: '47%', alignItems: 'center', borderWidth: 1,
-    borderColor: '#333', borderTopWidth: 4,
-  },
-  emoji: { fontSize: 36, marginBottom: 10 },
-  cardTitulo: {
-    color: '#fff', fontSize: 15, fontWeight: 'bold',
-    textAlign: 'center', marginBottom: 10,
-  },
+  menuRowSel: { backgroundColor: C.sel, borderBottomColor: C.border },
+  menuCursor: { fontFamily: F, fontSize: 8, color: C.gold2, width: 10 },
+  menuIcon: { fontSize: 14, width: 20, textAlign: 'center' },
+  menuBody: { flex: 1 },
+  menuName: { fontFamily: F, fontSize: 7, color: C.text },
   xpBadge: {
-    backgroundColor: '#0F3460', borderRadius: 8,
-    paddingHorizontal: 10, paddingVertical: 4,
+    borderWidth: 1,
+    paddingHorizontal: 5,
+    paddingVertical: 2,
   },
-  xpTexto: { color: '#4A90E2', fontSize: 12, fontWeight: 'bold' },
+  xpTxt: { fontFamily: F, fontSize: 5 },
 })

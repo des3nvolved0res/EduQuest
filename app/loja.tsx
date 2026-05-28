@@ -1,422 +1,411 @@
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, Modal } from 'react-native'
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, Modal } from 'react-native'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'expo-router'
 import { doc, onSnapshot, updateDoc, increment, addDoc, collection } from 'firebase/firestore'
 import { auth, db } from '@/config/firebase'
+import { C, F } from '@/constants/theme'
 
 const materias = [
-  { id: 'matematica', titulo: 'Matemática', emoji: '📐' },
-  { id: 'portugues', titulo: 'Português', emoji: '📝' },
-  { id: 'biologia', titulo: 'Biologia', emoji: '🧬' },
-  { id: 'historia', titulo: 'História', emoji: '📜' },
-  { id: 'geografia', titulo: 'Geografia', emoji: '🌍' },
-  { id: 'fisica', titulo: 'Física', emoji: '⚡' },
-  { id: 'quimica', titulo: 'Química', emoji: '🧪' },
-  { id: 'ingles', titulo: 'Inglês', emoji: '🌐' },
+  { id: 'matematica', nome: 'MATEMATICA', emoji: '📐' },
+  { id: 'portugues',  nome: 'PORTUGUES',  emoji: '📝' },
+  { id: 'biologia',   nome: 'BIOLOGIA',   emoji: '🧬' },
+  { id: 'historia',   nome: 'HISTORIA',   emoji: '📜' },
+  { id: 'geografia',  nome: 'GEOGRAFIA',  emoji: '🌍' },
+  { id: 'fisica',     nome: 'FISICA',     emoji: '⚡' },
+  { id: 'quimica',    nome: 'QUIMICA',    emoji: '🧪' },
+  { id: 'ingles',     nome: 'INGLES',     emoji: '🌐' },
 ]
 
 const cosmeticos = [
-  { id: 'titulo_matematica', titulo: 'Mestre da Matemática', emoji: '📐', custo: 50, tipo: 'titulo' },
-  { id: 'titulo_biologia', titulo: 'Mestre da Biologia', emoji: '🧬', custo: 50, tipo: 'titulo' },
-  { id: 'titulo_historia', titulo: 'Mestre da História', emoji: '📜', custo: 50, tipo: 'titulo' },
-  { id: 'moldura_ouro', titulo: 'Moldura Dourada', emoji: '🥇', custo: 100, tipo: 'moldura' },
-  { id: 'moldura_prata', titulo: 'Moldura Prateada', emoji: '🥈', custo: 60, tipo: 'moldura' },
+  { id: 'titulo_matematica', nome: 'MESTRE DA MATEMATICA', emoji: '📐', custo: 50 },
+  { id: 'titulo_biologia',   nome: 'MESTRE DA BIOLOGIA',   emoji: '🧬', custo: 50 },
+  { id: 'titulo_historia',   nome: 'MESTRE DA HISTORIA',   emoji: '📜', custo: 50 },
+  { id: 'moldura_ouro',      nome: 'MOLDURA DOURADA',      emoji: '🥇', custo: 100 },
+  { id: 'moldura_prata',     nome: 'MOLDURA PRATEADA',     emoji: '🥈', custo: 60 },
 ]
 
 type DadosAluno = {
-  nome: string
   pontosPermanentes: number
   pontosTemporarios: number
-  nivel: number
   cosmeticosDesbloqueados?: string[]
 }
 
 export default function LojaScreen() {
   const router = useRouter()
   const [dados, setDados] = useState<DadosAluno | null>(null)
-  const [abaSelecionada, setAbaSelecionada] = useState<'bonus' | 'cosmeticos'>('bonus')
-  const [materiaSelecionada, setMateriaSelecionada] = useState<string | null>(null)
+  const [aba, setAba] = useState<'bonus' | 'cosmeticos'>('bonus')
+  const [materiaSel, setMateriaSel] = useState<string | null>(null)
   const [tipoPonto, setTipoPonto] = useState<'permanentes' | 'temporarios'>('permanentes')
   const [quantidade, setQuantidade] = useState(10)
-  const [modalVisivel, setModalVisivel] = useState(false)
+  const [modal, setModal] = useState(false)
   const [voucher, setVoucher] = useState<string | null>(null)
   const [salvando, setSalvando] = useState(false)
 
   useEffect(() => {
     if (!auth.currentUser) return
-    const uid = auth.currentUser.uid
-    const unsub = onSnapshot(doc(db, 'usuarios', uid), (snap) => {
+    const unsub = onSnapshot(doc(db, 'usuarios', auth.currentUser.uid), (snap) => {
       if (snap.exists()) setDados(snap.data() as DadosAluno)
     })
     return () => unsub()
   }, [])
 
-  const saldoDisponivel = tipoPonto === 'permanentes'
+  const saldo = tipoPonto === 'permanentes'
     ? dados?.pontosPermanentes ?? 0
     : dados?.pontosTemporarios ?? 0
 
-  function gerarCodigoVoucher() {
+  function gerarCodigo() {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-    let codigo = 'EQ-'
-    for (let i = 0; i < 8; i++) {
-      codigo += chars[Math.floor(Math.random() * chars.length)]
-    }
-    return codigo
+    let c = 'EQ-'
+    for (let i = 0; i < 8; i++) c += chars[Math.floor(Math.random() * chars.length)]
+    return c
   }
 
   async function resgatar() {
-    if (!materiaSelecionada) {
-      Alert.alert('Atenção', 'Selecione uma matéria.')
-      return
-    }
-    if (quantidade > saldoDisponivel) {
-      Alert.alert('Saldo insuficiente', `Você tem apenas ${saldoDisponivel} XP disponível.`)
-      return
-    }
-    if (quantidade < 10) {
-      Alert.alert('Atenção', 'O mínimo para resgate é 10 XP.')
-      return
-    }
-
+    if (!materiaSel) { Alert.alert('ERRO', 'Selecione uma materia.'); return }
+    if (quantidade > saldo) { Alert.alert('SALDO INSUFICIENTE', `Voce tem apenas ${saldo} XP.`); return }
+    if (quantidade < 10) { Alert.alert('ERRO', 'Minimo para resgate: 10 XP.'); return }
     setSalvando(true)
     try {
       const uid = auth.currentUser!.uid
       const campo = tipoPonto === 'permanentes' ? 'pontosPermanentes' : 'pontosTemporarios'
-      const codigo = gerarCodigoVoucher()
-      const materia = materias.find(m => m.id === materiaSelecionada)
-
-      await updateDoc(doc(db, 'usuarios', uid), {
-        [campo]: increment(-quantidade),
-      })
-
+      const codigo = gerarCodigo()
+      const materia = materias.find(m => m.id === materiaSel)
+      await updateDoc(doc(db, 'usuarios', uid), { [campo]: increment(-quantidade) })
       await addDoc(collection(db, 'vouchers'), {
-        codigo,
-        uid,
-        nomeAluno: dados?.nome,
-        materia: materiaSelecionada,
-        nomeMateria: materia?.titulo,
+        codigo, uid,
+        nomeAluno: auth.currentUser?.email,
+        materia: materiaSel,
+        nomeMateria: materia?.nome,
         xp: quantidade,
         validado: false,
         criadoEm: new Date().toISOString(),
       })
-
       setVoucher(codigo)
-      setModalVisivel(true)
+      setModal(true)
     } catch (e) {
-      Alert.alert('Erro', 'Não foi possível gerar o voucher.')
-      console.log(e)
+      Alert.alert('ERRO', 'Nao foi possivel gerar o voucher.')
     }
     setSalvando(false)
   }
 
-  async function comprarCosmetico(cosmetico: typeof cosmeticos[0]) {
-    if ((dados?.pontosPermanentes ?? 0) < cosmetico.custo) {
-      Alert.alert('Saldo insuficiente', `Você precisa de ${cosmetico.custo} Cristais.`)
+  async function comprar(c: typeof cosmeticos[0]) {
+    if ((dados?.pontosPermanentes ?? 0) < c.custo) {
+      Alert.alert('SALDO INSUFICIENTE', `Voce precisa de ${c.custo} Cristais.`)
       return
     }
-    if (dados?.cosmeticosDesbloqueados?.includes(cosmetico.id)) {
-      Alert.alert('Já desbloqueado', 'Você já possui este item.')
+    if (dados?.cosmeticosDesbloqueados?.includes(c.id)) {
+      Alert.alert('JA DESBLOQUEADO', 'Voce ja possui este item.')
       return
     }
-
-    Alert.alert(
-      'Confirmar compra',
-      `Deseja comprar "${cosmetico.titulo}" por ${cosmetico.custo} Cristais?`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Comprar',
-          onPress: async () => {
-            try {
-              const uid = auth.currentUser!.uid
-              await updateDoc(doc(db, 'usuarios', uid), {
-                pontosPermanentes: increment(-cosmetico.custo),
-                cosmeticosDesbloqueados: [...(dados?.cosmeticosDesbloqueados ?? []), cosmetico.id],
-              })
-              Alert.alert('Parabéns!', `"${cosmetico.titulo}" desbloqueado!`)
-            } catch (e) {
-              Alert.alert('Erro', 'Não foi possível comprar o item.')
-            }
-          }
+    Alert.alert('CONFIRMAR', `Comprar "${c.nome}" por ${c.custo} Cristais?`, [
+      { text: 'CANCELAR', style: 'cancel' },
+      {
+        text: 'COMPRAR', onPress: async () => {
+          try {
+            await updateDoc(doc(db, 'usuarios', auth.currentUser!.uid), {
+              pontosPermanentes: increment(-c.custo),
+              cosmeticosDesbloqueados: [...(dados?.cosmeticosDesbloqueados ?? []), c.id],
+            })
+            Alert.alert('DESBLOQUEADO!', `"${c.nome}" adicionado ao perfil!`)
+          } catch { Alert.alert('ERRO', 'Nao foi possivel comprar.') }
         }
-      ]
-    )
+      }
+    ])
   }
 
   return (
     <ScrollView style={s.scroll} contentContainerStyle={s.container}>
-      <TouchableOpacity onPress={() => router.back()} style={s.btnVoltar}>
-        <Text style={s.txtVoltar}>← Voltar</Text>
-      </TouchableOpacity>
 
-      <Text style={s.titulo}>Loja de Conquistas</Text>
-
-      <View style={s.saldoRow}>
-        <View style={s.saldoCard}>
-          <Text style={s.saldoEmoji}>💎</Text>
-          <Text style={s.saldoValor}>{dados?.pontosPermanentes ?? 0}</Text>
-          <Text style={s.saldoLabel}>Cristais</Text>
-        </View>
-        <View style={s.saldoCard}>
-          <Text style={s.saldoEmoji}>⚡</Text>
-          <Text style={s.saldoValor}>{dados?.pontosTemporarios ?? 0}</Text>
-          <Text style={s.saldoLabel}>Bônus ciclo</Text>
+      {/* Header */}
+      <View style={s.win}>
+        <View style={s.winInner}>
+          <View style={s.winTitle}>
+            <TouchableOpacity onPress={() => router.back()}>
+              <Text style={s.backTxt}>◀ VOLTAR</Text>
+            </TouchableOpacity>
+            <Text style={s.winTitleTxt}>🏪 LOJA DE CONQUISTAS</Text>
+          </View>
+          <View style={s.saldoRow}>
+            <View style={s.saldoBox}>
+              <Text style={s.saldoVal}>{dados?.pontosPermanentes ?? 0}</Text>
+              <Text style={s.saldoLbl}>💎 CRISTAIS</Text>
+            </View>
+            <View style={s.saldoBox}>
+              <Text style={[s.saldoVal, { color: C.purple2 }]}>{dados?.pontosTemporarios ?? 0}</Text>
+              <Text style={s.saldoLbl}>⚡ BONUS</Text>
+            </View>
+          </View>
         </View>
       </View>
 
-      <View style={s.abas}>
-        <TouchableOpacity
-          style={[s.aba, abaSelecionada === 'bonus' && s.abaAtiva]}
-          onPress={() => setAbaSelecionada('bonus')}
-        >
-          <Text style={[s.txtAba, abaSelecionada === 'bonus' && s.txtAbaAtiva]}>
-            🎓 Bônus de nota
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[s.aba, abaSelecionada === 'cosmeticos' && s.abaAtiva]}
-          onPress={() => setAbaSelecionada('cosmeticos')}
-        >
-          <Text style={[s.txtAba, abaSelecionada === 'cosmeticos' && s.txtAbaAtiva]}>
-            ✨ Cosméticos
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      {abaSelecionada === 'bonus' && (
-        <View>
-          <Text style={s.secao}>Tipo de pontos</Text>
-          <View style={s.tipoRow}>
+      {/* Abas */}
+      <View style={s.win}>
+        <View style={s.winInner}>
+          <View style={s.toggle}>
             <TouchableOpacity
-              style={[s.tipoBotao, tipoPonto === 'permanentes' && s.tipoBotaoAtivo]}
-              onPress={() => setTipoPonto('permanentes')}
+              style={[s.toggleBtn, aba === 'bonus' && s.toggleBtnOn]}
+              onPress={() => setAba('bonus')}
             >
-              <Text style={[s.tipoTxt, tipoPonto === 'permanentes' && s.tipoTxtAtivo]}>
-                💎 Cristais
-              </Text>
+              <Text style={[s.toggleTxt, aba === 'bonus' && s.toggleTxtOn]}>🎓 BONUS DE NOTA</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[s.tipoBotao, tipoPonto === 'temporarios' && s.tipoBotaoAtivo]}
-              onPress={() => setTipoPonto('temporarios')}
+              style={[s.toggleBtn, aba === 'cosmeticos' && s.toggleBtnOn]}
+              onPress={() => setAba('cosmeticos')}
             >
-              <Text style={[s.tipoTxt, tipoPonto === 'temporarios' && s.tipoTxtAtivo]}>
-                ⚡ Bônus ciclo
-              </Text>
+              <Text style={[s.toggleTxt, aba === 'cosmeticos' && s.toggleTxtOn]}>✨ COSMETICOS</Text>
             </TouchableOpacity>
           </View>
+        </View>
+      </View>
 
-          <Text style={s.secao}>Selecione a matéria</Text>
-          <View style={s.materiasGrade}>
-            {materias.map((m) => (
+      {aba === 'bonus' && (
+        <>
+          {/* Tipo de ponto */}
+          <View style={s.win}>
+            <View style={s.winInner}>
+              <View style={s.winTitle}>
+                <Text style={s.winTitleTxt}>TIPO DE PONTOS</Text>
+              </View>
+              <View style={s.toggle}>
+                <TouchableOpacity
+                  style={[s.toggleBtn, tipoPonto === 'permanentes' && s.toggleBtnOn]}
+                  onPress={() => setTipoPonto('permanentes')}
+                >
+                  <Text style={[s.toggleTxt, tipoPonto === 'permanentes' && s.toggleTxtOn]}>
+                    💎 CRISTAIS
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[s.toggleBtn, tipoPonto === 'temporarios' && s.toggleBtnOn]}
+                  onPress={() => setTipoPonto('temporarios')}
+                >
+                  <Text style={[s.toggleTxt, tipoPonto === 'temporarios' && s.toggleTxtOn]}>
+                    ⚡ BONUS
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+
+          {/* Matéria */}
+          <View style={s.win}>
+            <View style={s.winInner}>
+              <View style={s.winTitle}>
+                <Text style={s.winTitleTxt}>SELECIONE A MATERIA</Text>
+              </View>
+              {materias.map((m, i) => (
+                <TouchableOpacity
+                  key={m.id}
+                  style={[s.menuRow, materiaSel === m.id && s.menuRowSel]}
+                  onPress={() => setMateriaSel(m.id)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={s.menuCursor}>{materiaSel === m.id ? '▶' : ' '}</Text>
+                  <Text style={s.menuIcon}>{m.emoji}</Text>
+                  <Text style={s.menuName}>{m.nome}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          {/* Quantidade */}
+          <View style={s.win}>
+            <View style={s.winInner}>
+              <View style={s.winTitle}>
+                <Text style={s.winTitleTxt}>QUANTIDADE DE XP</Text>
+                <Text style={[s.winTitleTxt, { color: C.text3 }]}>SALDO: {saldo}</Text>
+              </View>
+              <View style={s.qtdRow}>
+                <TouchableOpacity
+                  style={s.qtdBtn}
+                  onPress={() => setQuantidade(q => Math.max(10, q - 10))}
+                >
+                  <Text style={s.qtdBtnTxt}>−</Text>
+                </TouchableOpacity>
+                <View style={s.qtdDisplay}>
+                  <Text style={s.qtdVal}>{quantidade}</Text>
+                  <Text style={s.qtdLbl}>XP</Text>
+                </View>
+                <TouchableOpacity
+                  style={s.qtdBtn}
+                  onPress={() => setQuantidade(q => Math.min(saldo, q + 10))}
+                >
+                  <Text style={s.qtdBtnTxt}>+</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+
+          <View style={s.win}>
+            <View style={s.winInner}>
               <TouchableOpacity
-                key={m.id}
-                style={[s.materiaBtn, materiaSelecionada === m.id && s.materiaBtnAtivo]}
-                onPress={() => setMateriaSelecionada(m.id)}
+                style={[s.btnGold, salvando && { opacity: 0.6 }]}
+                onPress={resgatar}
+                disabled={salvando}
+                activeOpacity={0.8}
               >
-                <Text style={s.materiaEmoji}>{m.emoji}</Text>
-                <Text style={[s.materiaTxt, materiaSelecionada === m.id && s.materiaTxtAtivo]}>
-                  {m.titulo}
+                <Text style={s.btnGoldTxt}>
+                  {salvando ? 'GERANDO...' : '🎟 GERAR VOUCHER'}
                 </Text>
               </TouchableOpacity>
-            ))}
-          </View>
-
-          <Text style={s.secao}>Quantidade de XP</Text>
-          <View style={s.quantidadeRow}>
-            <TouchableOpacity
-              style={s.btnQtd}
-              onPress={() => setQuantidade(q => Math.max(10, q - 10))}
-            >
-              <Text style={s.txtQtd}>−</Text>
-            </TouchableOpacity>
-            <View style={s.qtdDisplay}>
-              <Text style={s.qtdValor}>{quantidade}</Text>
-              <Text style={s.qtdLabel}>XP</Text>
             </View>
-            <TouchableOpacity
-              style={s.btnQtd}
-              onPress={() => setQuantidade(q => Math.min(saldoDisponivel, q + 10))}
-            >
-              <Text style={s.txtQtd}>+</Text>
-            </TouchableOpacity>
           </View>
-
-          <TouchableOpacity
-            style={[s.btnResgatar, salvando && { opacity: 0.6 }]}
-            onPress={resgatar}
-            disabled={salvando}
-          >
-            <Text style={s.txtResgatar}>
-              {salvando ? 'Gerando voucher...' : '🎟️ Gerar voucher'}
-            </Text>
-          </TouchableOpacity>
-        </View>
+        </>
       )}
 
-      {abaSelecionada === 'cosmeticos' && (
-        <View>
-          {cosmeticos.map((c) => {
-            const desbloqueado = dados?.cosmeticosDesbloqueados?.includes(c.id)
-            return (
-              <TouchableOpacity
-                key={c.id}
-                style={[s.cosmeticoCard, desbloqueado && s.cosmeticoDesbloqueado]}
-                onPress={() => comprarCosmetico(c)}
-              >
-                <Text style={s.cosmeticoEmoji}>{c.emoji}</Text>
-                <View style={s.cosmeticoTexto}>
-                  <Text style={s.cosmeticoTitulo}>{c.titulo}</Text>
-                  <Text style={s.cosmeticoTipo}>{c.tipo}</Text>
-                </View>
-                {desbloqueado ? (
-                  <Text style={s.desbloqueadoBadge}>✓ Seu</Text>
-                ) : (
-                  <View style={s.custoBadge}>
-                    <Text style={s.custoTxt}>💎 {c.custo}</Text>
+      {aba === 'cosmeticos' && (
+        <View style={s.win}>
+          <View style={s.winInner}>
+            <View style={s.winTitle}>
+              <Text style={s.winTitleTxt}>ITENS DISPONIVEIS</Text>
+            </View>
+            {cosmeticos.map((c) => {
+              const tem = dados?.cosmeticosDesbloqueados?.includes(c.id)
+              return (
+                <TouchableOpacity
+                  key={c.id}
+                  style={[s.menuRow, tem && { opacity: 0.5 }]}
+                  onPress={() => comprar(c)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={s.menuCursor}>{tem ? '✓' : '▶'}</Text>
+                  <Text style={s.menuIcon}>{c.emoji}</Text>
+                  <Text style={s.menuName}>{c.nome}</Text>
+                  <View style={[s.xpBadge, { borderColor: tem ? C.green : C.gold }]}>
+                    <Text style={[s.xpTxt, { color: tem ? C.green2 : C.gold2 }]}>
+                      {tem ? 'SEU' : `${c.custo}XP`}
+                    </Text>
                   </View>
-                )}
-              </TouchableOpacity>
-            )
-          })}
+                </TouchableOpacity>
+              )
+            })}
+          </View>
         </View>
       )}
 
-      <Modal visible={modalVisivel} transparent animationType="fade">
+      {/* Modal voucher */}
+      <Modal visible={modal} transparent animationType="fade">
         <View style={s.modalOverlay}>
           <View style={s.modalCard}>
-            <Text style={s.modalEmoji}>🎟️</Text>
-            <Text style={s.modalTitulo}>Voucher gerado!</Text>
-            <Text style={s.modalSub}>Apresente este código ao seu professor</Text>
-
-            <View style={s.codigoContainer}>
-              <Text style={s.codigo}>{voucher}</Text>
+            <View style={s.winTitle}>
+              <Text style={s.winTitleTxt}>🎟 COMPROVANTE GERADO!</Text>
             </View>
-
-            <Text style={s.modalInfo}>
-              {materias.find(m => m.id === materiaSelecionada)?.emoji}{' '}
-              {materias.find(m => m.id === materiaSelecionada)?.titulo} • {quantidade} XP
-            </Text>
-
+            <View style={s.voucherBody}>
+              <Text style={s.voucherTag}>CODIGO DE AUTENTICACAO</Text>
+              <Text style={s.voucherCode}>{voucher}</Text>
+              <Text style={s.voucherInfo}>
+                {materias.find(m => m.id === materiaSel)?.emoji}{' '}
+                {materias.find(m => m.id === materiaSel)?.nome} · {quantidade} XP
+              </Text>
+              <Text style={s.voucherSub}>APRESENTE AO PROFESSOR</Text>
+            </View>
             <TouchableOpacity
-              style={s.btnFechar}
+              style={s.btnBlue}
               onPress={() => {
-                setModalVisivel(false)
+                setModal(false)
                 setVoucher(null)
-                setMateriaSelecionada(null)
+                setMateriaSel(null)
                 setQuantidade(10)
               }}
+              activeOpacity={0.8}
             >
-              <Text style={s.txtFechar}>Entendido</Text>
+              <Text style={s.btnBlueTxt}>▶ ENTENDIDO</Text>
             </TouchableOpacity>
           </View>
         </View>
       </Modal>
+
     </ScrollView>
   )
 }
 
 const s = StyleSheet.create({
-  scroll: { flex: 1, backgroundColor: '#1A1A2E' },
-  container: { padding: 24, paddingTop: 60 },
-  btnVoltar: { marginBottom: 24 },
-  txtVoltar: { color: '#4A90E2', fontSize: 16 },
-  titulo: { color: '#fff', fontSize: 28, fontWeight: 'bold', marginBottom: 24 },
-  saldoRow: { flexDirection: 'row', gap: 16, marginBottom: 24 },
-  saldoCard: {
-    flex: 1, backgroundColor: '#16213E', borderRadius: 16,
-    padding: 16, alignItems: 'center', borderWidth: 1, borderColor: '#333',
+  scroll: { flex: 1, backgroundColor: C.bg },
+  container: { padding: 12, paddingTop: 48, gap: 4 },
+
+  win: { borderWidth: 1, borderColor: C.border, backgroundColor: C.panel },
+  winInner: { borderWidth: 1, borderColor: C.border2, margin: 2 },
+  winTitle: {
+    backgroundColor: C.panel,
+    borderBottomWidth: 1, borderBottomColor: C.border,
+    paddingVertical: 5, paddingHorizontal: 8,
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
   },
-  saldoEmoji: { fontSize: 28, marginBottom: 6 },
-  saldoValor: { color: '#fff', fontSize: 24, fontWeight: 'bold' },
-  saldoLabel: { color: '#888', fontSize: 12, marginTop: 2 },
-  abas: { flexDirection: 'row', marginBottom: 24, gap: 12 },
-  aba: {
-    flex: 1, padding: 12, borderRadius: 12,
-    backgroundColor: '#16213E', alignItems: 'center',
-    borderWidth: 1, borderColor: '#333',
+  winTitleTxt: { fontFamily: F, fontSize: 7, color: C.blue2, letterSpacing: 1 },
+  backTxt: { fontFamily: F, fontSize: 6, color: C.text3 },
+
+  saldoRow: { flexDirection: 'row', padding: 8, gap: 6 },
+  saldoBox: {
+    flex: 1, backgroundColor: '#000',
+    borderWidth: 1, borderColor: C.border2,
+    padding: 10, alignItems: 'center',
   },
-  abaAtiva: { backgroundColor: '#4A90E2', borderColor: '#4A90E2' },
-  txtAba: { color: '#888', fontSize: 14, fontWeight: 'bold' },
-  txtAbaAtiva: { color: '#fff' },
-  secao: {
-    color: '#888', fontSize: 13, marginBottom: 12,
-    textTransform: 'uppercase', letterSpacing: 1,
+  saldoVal: { fontFamily: F, fontSize: 16, color: C.green2, marginBottom: 4 },
+  saldoLbl: { fontFamily: F, fontSize: 5, color: C.text3 },
+
+  toggle: { flexDirection: 'row' },
+  toggleBtn: { flex: 1, paddingVertical: 10, alignItems: 'center', backgroundColor: C.bg },
+  toggleBtnOn: { backgroundColor: C.blue },
+  toggleTxt: { fontFamily: F, fontSize: 6, color: C.text3, letterSpacing: 1 },
+  toggleTxtOn: { color: '#000' },
+
+  menuRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: C.panel,
+    borderBottomWidth: 1, borderBottomColor: C.border2,
+    padding: 10,
   },
-  tipoRow: { flexDirection: 'row', gap: 12, marginBottom: 24 },
-  tipoBotao: {
-    flex: 1, padding: 12, borderRadius: 12,
-    backgroundColor: '#16213E', alignItems: 'center',
-    borderWidth: 1, borderColor: '#333',
-  },
-  tipoBotaoAtivo: { borderColor: '#4A90E2', backgroundColor: '#0F3460' },
-  tipoTxt: { color: '#888', fontSize: 14 },
-  tipoTxtAtivo: { color: '#4A90E2' },
-  materiasGrade: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 24 },
-  materiaBtn: {
-    width: '22%', padding: 10, borderRadius: 12,
-    backgroundColor: '#16213E', alignItems: 'center',
-    borderWidth: 1, borderColor: '#333',
-  },
-  materiaBtnAtivo: { borderColor: '#4A90E2', backgroundColor: '#0F3460' },
-  materiaEmoji: { fontSize: 22, marginBottom: 4 },
-  materiaTxt: { color: '#888', fontSize: 11, textAlign: 'center' },
-  materiaTxtAtivo: { color: '#4A90E2' },
-  quantidadeRow: {
+  menuRowSel: { backgroundColor: C.sel, borderBottomColor: C.border },
+  menuCursor: { fontFamily: F, fontSize: 8, color: C.gold2, width: 10 },
+  menuIcon: { fontSize: 14, width: 20, textAlign: 'center' },
+  menuName: { flex: 1, fontFamily: F, fontSize: 7, color: C.text },
+  xpBadge: { borderWidth: 1, paddingHorizontal: 5, paddingVertical: 2 },
+  xpTxt: { fontFamily: F, fontSize: 5 },
+
+  qtdRow: {
     flexDirection: 'row', alignItems: 'center',
-    justifyContent: 'center', gap: 24, marginBottom: 24,
+    justifyContent: 'center', gap: 24, padding: 14,
   },
-  btnQtd: {
-    width: 44, height: 44, borderRadius: 22,
-    backgroundColor: '#16213E', justifyContent: 'center',
-    alignItems: 'center', borderWidth: 1, borderColor: '#333',
+  qtdBtn: {
+    width: 36, height: 36, backgroundColor: '#000',
+    borderWidth: 1, borderColor: C.border,
+    alignItems: 'center', justifyContent: 'center',
   },
-  txtQtd: { color: '#fff', fontSize: 22 },
+  qtdBtnTxt: { fontFamily: F, fontSize: 14, color: C.text },
   qtdDisplay: { alignItems: 'center' },
-  qtdValor: { color: '#fff', fontSize: 36, fontWeight: 'bold' },
-  qtdLabel: { color: '#888', fontSize: 14 },
-  btnResgatar: {
-    backgroundColor: '#4A90E2', padding: 18,
-    borderRadius: 16, alignItems: 'center', marginBottom: 32,
+  qtdVal: { fontFamily: F, fontSize: 24, color: C.text },
+  qtdLbl: { fontFamily: F, fontSize: 6, color: C.text3 },
+
+  btnGold: {
+    backgroundColor: C.gold,
+    borderTopWidth: 2, borderLeftWidth: 2,
+    borderBottomWidth: 2, borderRightWidth: 2,
+    borderTopColor: C.gold2, borderLeftColor: C.gold2,
+    borderBottomColor: '#442200', borderRightColor: '#442200',
+    paddingVertical: 14, alignItems: 'center', margin: 8,
   },
-  txtResgatar: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
-  cosmeticoCard: {
-    backgroundColor: '#16213E', borderRadius: 16, padding: 16,
-    marginBottom: 12, flexDirection: 'row', alignItems: 'center',
-    borderWidth: 1, borderColor: '#333',
+  btnGoldTxt: { fontFamily: F, fontSize: 8, color: '#000', letterSpacing: 1 },
+  btnBlue: {
+    backgroundColor: C.blue,
+    borderTopWidth: 2, borderLeftWidth: 2,
+    borderBottomWidth: 2, borderRightWidth: 2,
+    borderTopColor: C.blue2, borderLeftColor: C.blue2,
+    borderBottomColor: '#112266', borderRightColor: '#112266',
+    paddingVertical: 14, alignItems: 'center', margin: 8,
   },
-  cosmeticoDesbloqueado: { borderColor: '#27AE60', opacity: 0.7 },
-  cosmeticoEmoji: { fontSize: 32, marginRight: 16 },
-  cosmeticoTexto: { flex: 1 },
-  cosmeticoTitulo: { color: '#fff', fontSize: 15, fontWeight: 'bold' },
-  cosmeticoTipo: { color: '#888', fontSize: 13, marginTop: 2 },
-  desbloqueadoBadge: { color: '#27AE60', fontSize: 14, fontWeight: 'bold' },
-  custoBadge: {
-    backgroundColor: '#0F3460', borderRadius: 8,
-    paddingHorizontal: 10, paddingVertical: 6,
-  },
-  custoTxt: { color: '#4A90E2', fontSize: 13, fontWeight: 'bold' },
+  btnBlueTxt: { fontFamily: F, fontSize: 8, color: '#000', letterSpacing: 1 },
+
   modalOverlay: {
-    flex: 1, backgroundColor: 'rgba(0,0,0,0.8)',
-    justifyContent: 'center', alignItems: 'center', padding: 24,
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.85)',
+    justifyContent: 'center', alignItems: 'center', padding: 20,
   },
   modalCard: {
-    backgroundColor: '#16213E', borderRadius: 24,
-    padding: 32, alignItems: 'center', width: '100%',
-    borderWidth: 1, borderColor: '#333',
+    width: '100%', backgroundColor: C.panel,
+    borderWidth: 1, borderColor: C.gold,
   },
-  modalEmoji: { fontSize: 48, marginBottom: 16 },
-  modalTitulo: { color: '#fff', fontSize: 24, fontWeight: 'bold', marginBottom: 8 },
-  modalSub: { color: '#888', fontSize: 15, marginBottom: 24, textAlign: 'center' },
-  codigoContainer: {
-    backgroundColor: '#0F3460', borderRadius: 16,
-    paddingHorizontal: 24, paddingVertical: 16, marginBottom: 16,
-    borderWidth: 1, borderColor: '#4A90E2',
-  },
-  codigo: { color: '#4A90E2', fontSize: 28, fontWeight: 'bold', letterSpacing: 4 },
-  modalInfo: { color: '#888', fontSize: 15, marginBottom: 24 },
-  btnFechar: {
-    backgroundColor: '#4A90E2', padding: 16,
-    borderRadius: 12, alignItems: 'center', width: '100%',
-  },
-  txtFechar: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+  voucherBody: { padding: 20, alignItems: 'center' },
+  voucherTag: { fontFamily: F, fontSize: 6, color: C.text3, letterSpacing: 2, marginBottom: 10 },
+  voucherCode: { fontFamily: F, fontSize: 16, color: C.gold2, letterSpacing: 4, marginBottom: 10 },
+  voucherInfo: { fontFamily: F, fontSize: 7, color: C.text2, marginBottom: 6 },
+  voucherSub: { fontFamily: F, fontSize: 6, color: C.text3 },
 })

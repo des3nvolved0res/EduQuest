@@ -1,187 +1,178 @@
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native'
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native'
 import { useRouter, useLocalSearchParams } from 'expo-router'
+import { C, F } from '@/constants/theme'
 
 const conteudo: Record<string, { titulo: string; pilulas: { icone: string; texto: string }[] }> = {
   trigonometria: {
-    titulo: 'Trigonometria',
+    titulo: 'TRIGONOMETRIA',
     pilulas: [
       { icone: '📐', texto: 'Seno = cateto oposto / hipotenusa' },
       { icone: '📐', texto: 'Cosseno = cateto adjacente / hipotenusa' },
       { icone: '📐', texto: 'Tangente = cateto oposto / cateto adjacente' },
       { icone: '💡', texto: 'Memorize: SOH-CAH-TOA' },
-      { icone: '⚠️', texto: 'Em um triângulo retângulo, a hipotenusa é sempre o maior lado' },
+      { icone: '⚠️', texto: 'A hipotenusa e sempre o maior lado' },
     ],
   },
   funcoes: {
-    titulo: 'Funções',
+    titulo: 'FUNCOES',
     pilulas: [
-      { icone: '📊', texto: 'Função do 1º grau: f(x) = ax + b, onde a ≠ 0' },
-      { icone: '📊', texto: 'Função do 2º grau: f(x) = ax² + bx + c, onde a ≠ 0' },
-      { icone: '💡', texto: 'O gráfico do 1º grau é uma reta' },
-      { icone: '💡', texto: 'O gráfico do 2º grau é uma parábola' },
-      { icone: '⚠️', texto: 'Se a > 0 a parábola abre para cima, se a < 0 abre para baixo' },
+      { icone: '📊', texto: 'Funcao do 1 grau: f(x) = ax + b' },
+      { icone: '📊', texto: 'Funcao do 2 grau: f(x) = ax2 + bx + c' },
+      { icone: '💡', texto: 'Grafico do 1 grau e uma reta' },
+      { icone: '💡', texto: 'Grafico do 2 grau e uma parabola' },
+      { icone: '⚠️', texto: 'Se a > 0 a parabola abre para cima' },
     ],
   },
   celula: {
-    titulo: 'Célula',
+    titulo: 'CELULA',
     pilulas: [
-      { icone: '🔬', texto: 'Células procariontes não têm núcleo definido (ex: bactérias)' },
-      { icone: '🔬', texto: 'Células eucariontes têm núcleo com membrana (ex: animais e plantas)' },
-      { icone: '💡', texto: 'Mitocôndria = usina de energia da célula (ATP)' },
-      { icone: '💡', texto: 'Ribossomos = produção de proteínas' },
-      { icone: '⚠️', texto: 'Apenas células vegetais têm parede celular e cloroplastos' },
-    ],
-  },
-  genetica: {
-    titulo: 'Genética',
-    pilulas: [
-      { icone: '🧬', texto: 'DNA = ácido desoxirribonucleico, carrega informação genética' },
-      { icone: '🧬', texto: 'Gene = trecho do DNA que codifica uma característica' },
-      { icone: '💡', texto: 'Dominante (D) se expressa mesmo com um alelo recessivo' },
-      { icone: '💡', texto: 'Recessivo (r) só se expressa quando há dois alelos recessivos' },
-      { icone: '⚠️', texto: 'Genótipo = composição genética. Fenótipo = característica visível' },
+      { icone: '🔬', texto: 'Procariontes nao tem nucleo definido' },
+      { icone: '🔬', texto: 'Eucariontes tem nucleo com membrana' },
+      { icone: '💡', texto: 'Mitocondria = usina de energia (ATP)' },
+      { icone: '💡', texto: 'Ribossomos = producao de proteinas' },
+      { icone: '⚠️', texto: 'So celulas vegetais tem parede celular' },
     ],
   },
   mecanica: {
-    titulo: 'Mecânica',
+    titulo: 'MECANICA',
     pilulas: [
-      { icone: '⚡', texto: 'Velocidade média = distância / tempo (v = Δs/Δt)' },
-      { icone: '⚡', texto: 'Aceleração = variação de velocidade / tempo (a = Δv/Δt)' },
-      { icone: '💡', texto: '1ª Lei de Newton: todo corpo em repouso tende a continuar em repouso' },
-      { icone: '💡', texto: '2ª Lei de Newton: F = m × a' },
-      { icone: '⚠️', texto: '3ª Lei de Newton: ação e reação têm mesmo módulo e direções opostas' },
+      { icone: '⚡', texto: 'Velocidade media = distancia / tempo' },
+      { icone: '⚡', texto: 'Aceleracao = variacao velocidade / tempo' },
+      { icone: '💡', texto: '1a Lei: corpo em repouso fica em repouso' },
+      { icone: '💡', texto: '2a Lei: F = m x a' },
+      { icone: '⚠️', texto: '3a Lei: acao e reacao opostas' },
     ],
   },
 }
 
 const conteudoPadrao = {
-  titulo: 'Pílulas de Conhecimento',
+  titulo: 'PILULAS DE CONHECIMENTO',
   pilulas: [
-    { icone: '📚', texto: 'Revise o conteúdo do seu caderno sobre este tópico' },
-    { icone: '💡', texto: 'Leia com atenção as questões antes de responder' },
-    { icone: '⚠️', texto: 'Se errar, leia a explicação antes de continuar' },
+    { icone: '📚', texto: 'Revise o conteudo do seu caderno' },
+    { icone: '💡', texto: 'Leia com atencao antes de responder' },
+    { icone: '⚠️', texto: 'Se errar, leia a explicacao antes' },
   ],
 }
 
 export default function PilulasScreen() {
   const router = useRouter()
   const { portal, materia, topico } = useLocalSearchParams<{
-    portal: string
-    materia: string
-    topico: string
+    portal: string; materia: string; topico: string
   }>()
-
   const dados = conteudo[topico] ?? conteudoPadrao
 
-  function irParaQuiz() {
+  function irParaQuest() {
     router.push(`/quest?portal=${portal}&materia=${materia}&topico=${topico}`)
   }
 
   return (
     <ScrollView style={s.scroll} contentContainerStyle={s.container}>
-      <TouchableOpacity onPress={() => router.back()} style={s.btnVoltar}>
-        <Text style={s.txtVoltar}>← Voltar</Text>
-      </TouchableOpacity>
 
-      <Text style={s.label}>Pílulas de conhecimento</Text>
-      <Text style={s.titulo}>{dados.titulo}</Text>
-      <Text style={s.descricao}>Revise rapidamente antes do desafio</Text>
-
-      {dados.pilulas.map((pilula, index) => (
-        <View key={index} style={s.card}>
-          <Text style={s.icone}>{pilula.icone}</Text>
-          <Text style={s.texto}>{pilula.texto}</Text>
+      {/* Header */}
+      <View style={s.win}>
+        <View style={s.winInner}>
+          <View style={s.winTitle}>
+            <TouchableOpacity onPress={() => router.back()}>
+              <Text style={s.backTxt}>◀ VOLTAR</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={s.titleBody}>
+            <Text style={s.topicoNome}>{dados.titulo}</Text>
+            <Text style={s.subtxt}>REVISE ANTES DO DESAFIO</Text>
+          </View>
         </View>
-      ))}
-
-      <View style={s.acoes}>
-        <TouchableOpacity style={s.btnQuiz} onPress={irParaQuiz}>
-          <Text style={s.txtQuiz}>⚔️ Iniciar Quest</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={s.btnPular} onPress={irParaQuiz}>
-          <Text style={s.txtPular}>Já sei o conteúdo → Pular</Text>
-        </TouchableOpacity>
       </View>
+
+      {/* Pílulas */}
+      <View style={s.win}>
+        <View style={s.winInner}>
+          <View style={s.winTitle}>
+            <Text style={s.winTitleTxt}>BASE DE DADOS</Text>
+            <Text style={[s.winTitleTxt, { color: C.text3 }]}>{dados.pilulas.length} ENTRADAS</Text>
+          </View>
+          {dados.pilulas.map((p, i) => (
+            <View key={i} style={s.pilulaRow}>
+              <Text style={s.pilulaIcon}>{p.icone}</Text>
+              <View style={s.pilulaBody}>
+                <Text style={s.pilulaNum}>#{String(i + 1).padStart(2, '0')}</Text>
+                <Text style={s.pilulaTxt}>{p.texto}</Text>
+              </View>
+            </View>
+          ))}
+        </View>
+      </View>
+
+      {/* Botões */}
+      <View style={s.win}>
+        <View style={s.winInner}>
+          <TouchableOpacity style={s.btnBlue} onPress={irParaQuest} activeOpacity={0.8}>
+            <Text style={s.btnBlueTxt}>▶ INICIAR QUEST</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={s.btnGhost} onPress={irParaQuest} activeOpacity={0.8}>
+            <Text style={s.btnGhostTxt}>JA SEI O CONTEUDO: PULAR</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
     </ScrollView>
   )
 }
 
 const s = StyleSheet.create({
-  scroll: {
-    flex: 1,
-    backgroundColor: '#1A1A2E',
-  },
-  container: {
-    padding: 24,
-    paddingTop: 60,
-  },
-  btnVoltar: {
-    marginBottom: 24,
-  },
-  txtVoltar: {
-    color: '#4A90E2',
-    fontSize: 16,
-  },
-  label: {
-    color: '#888',
-    fontSize: 13,
-    marginBottom: 8,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  titulo: {
-    color: '#fff',
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  descricao: {
-    color: '#888',
-    fontSize: 15,
-    marginBottom: 32,
-  },
-  card: {
-    backgroundColor: '#16213E',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 12,
+  scroll: { flex: 1, backgroundColor: C.bg },
+  container: { padding: 12, paddingTop: 48, gap: 4 },
+
+  win: { borderWidth: 1, borderColor: C.border, backgroundColor: C.panel },
+  winInner: { borderWidth: 1, borderColor: C.border2, margin: 2 },
+  winTitle: {
+    backgroundColor: C.panel,
+    borderBottomWidth: 1,
+    borderBottomColor: C.border,
+    paddingVertical: 5,
+    paddingHorizontal: 8,
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  winTitleTxt: { fontFamily: F, fontSize: 7, color: C.blue2, letterSpacing: 1 },
+  backTxt: { fontFamily: F, fontSize: 6, color: C.text3 },
+
+  titleBody: { padding: 10 },
+  topicoNome: { fontFamily: F, fontSize: 8, color: C.gold2, marginBottom: 6 },
+  subtxt: { fontFamily: F, fontSize: 6, color: C.text3 },
+
+  pilulaRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: C.border2,
+  },
+  pilulaIcon: { fontSize: 16, width: 22, textAlign: 'center', marginTop: 2 },
+  pilulaBody: { flex: 1 },
+  pilulaNum: { fontFamily: F, fontSize: 5, color: C.text3, marginBottom: 4 },
+  pilulaTxt: { fontFamily: F, fontSize: 7, color: C.text, lineHeight: 14 },
+
+  btnBlue: {
+    backgroundColor: C.blue,
+    borderTopWidth: 2, borderLeftWidth: 2,
+    borderBottomWidth: 2, borderRightWidth: 2,
+    borderTopColor: C.blue2, borderLeftColor: C.blue2,
+    borderBottomColor: '#112266', borderRightColor: '#112266',
+    paddingVertical: 14,
+    alignItems: 'center',
+    margin: 8,
+    marginBottom: 4,
+  },
+  btnBlueTxt: { fontFamily: F, fontSize: 8, color: '#000', letterSpacing: 1 },
+  btnGhost: {
+    paddingVertical: 10,
+    alignItems: 'center',
+    margin: 8,
+    marginTop: 0,
     borderWidth: 1,
-    borderColor: '#333',
+    borderColor: C.border2,
   },
-  icone: {
-    fontSize: 24,
-    marginRight: 16,
-  },
-  texto: {
-    color: '#fff',
-    fontSize: 15,
-    flex: 1,
-    lineHeight: 22,
-  },
-  acoes: {
-    marginTop: 16,
-    gap: 12,
-  },
-  btnQuiz: {
-    backgroundColor: '#4A90E2',
-    padding: 18,
-    borderRadius: 16,
-    alignItems: 'center',
-  },
-  txtQuiz: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  btnPular: {
-    padding: 16,
-    alignItems: 'center',
-  },
-  txtPular: {
-    color: '#888',
-    fontSize: 15,
-  },
+  btnGhostTxt: { fontFamily: F, fontSize: 6, color: C.text3, letterSpacing: 1 },
 })

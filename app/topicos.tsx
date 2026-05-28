@@ -1,171 +1,268 @@
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native'
-import { useRouter, useLocalSearchParams } from 'expo-router'
+import { C, F } from "@/constants/theme";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useState } from "react";
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
-const topicosPorMateria: Record<string, { id: string; titulo: string; descricao: string }[]> = {
+const topicosPorMateria: Record<
+  string,
+  { id: string; titulo: string; descricao: string }[]
+> = {
   matematica: [
-    { id: 'trigonometria', titulo: 'Trigonometria', descricao: 'Seno, cosseno e tangente' },
-    { id: 'funcoes', titulo: 'Funções', descricao: 'Funções do 1º e 2º grau' },
-    { id: 'geometria', titulo: 'Geometria', descricao: 'Áreas e volumes' },
-    { id: 'estatistica', titulo: 'Estatística', descricao: 'Média, moda e mediana' },
-    { id: 'probabilidade', titulo: 'Probabilidade', descricao: 'Eventos e combinações' },
+    {
+      id: "trigonometria",
+      titulo: "TRIGONOMETRIA",
+      descricao: "Seno, cosseno e tangente",
+    },
+    { id: "funcoes", titulo: "FUNCOES", descricao: "Funcoes do 1 e 2 grau" },
+    { id: "geometria", titulo: "GEOMETRIA", descricao: "Areas e volumes" },
+    {
+      id: "estatistica",
+      titulo: "ESTATISTICA",
+      descricao: "Media, moda e mediana",
+    },
+    {
+      id: "probabilidade",
+      titulo: "PROBABILIDADE",
+      descricao: "Eventos e combinacoes",
+    },
   ],
   portugues: [
-    { id: 'interpretacao', titulo: 'Interpretação de texto', descricao: 'Leitura e análise' },
-    { id: 'gramatica', titulo: 'Gramática', descricao: 'Classes e funções' },
-    { id: 'redacao', titulo: 'Redação', descricao: 'Dissertação e argumentação' },
-    { id: 'literatura', titulo: 'Literatura', descricao: 'Movimentos literários' },
+    {
+      id: "interpretacao",
+      titulo: "INTERPRETACAO",
+      descricao: "Leitura e analise",
+    },
+    { id: "gramatica", titulo: "GRAMATICA", descricao: "Classes e funcoes" },
+    {
+      id: "redacao",
+      titulo: "REDACAO",
+      descricao: "Dissertacao e argumentacao",
+    },
+    {
+      id: "literatura",
+      titulo: "LITERATURA",
+      descricao: "Movimentos literarios",
+    },
   ],
   biologia: [
-    { id: 'celula', titulo: 'Célula', descricao: 'Estrutura e funções celulares' },
-    { id: 'genetica', titulo: 'Genética', descricao: 'Hereditariedade e DNA' },
-    { id: 'ecologia', titulo: 'Ecologia', descricao: 'Ecossistemas e cadeias' },
-    { id: 'evolucao', titulo: 'Evolução', descricao: 'Darwin e seleção natural' },
+    { id: "celula", titulo: "CELULA", descricao: "Estrutura e funcoes" },
+    { id: "genetica", titulo: "GENETICA", descricao: "Hereditariedade e DNA" },
+    { id: "ecologia", titulo: "ECOLOGIA", descricao: "Ecossistemas e cadeias" },
+    {
+      id: "evolucao",
+      titulo: "EVOLUCAO",
+      descricao: "Darwin e selecao natural",
+    },
   ],
   historia: [
-    { id: 'brasil-colonial', titulo: 'Brasil Colonial', descricao: 'Colonização e resistência' },
-    { id: 'revolucoes', titulo: 'Revoluções', descricao: 'Francesa, Industrial e Russa' },
-    { id: 'guerra-mundial', titulo: 'Guerras Mundiais', descricao: 'I e II Guerra Mundial' },
-    { id: 'brasil-republica', titulo: 'Brasil República', descricao: 'Da proclamação ao presente' },
+    {
+      id: "brasil-colonial",
+      titulo: "BRASIL COLONIAL",
+      descricao: "Colonizacao e resistencia",
+    },
+    {
+      id: "revolucoes",
+      titulo: "REVOLUCOES",
+      descricao: "Francesa, Industrial e Russa",
+    },
+    {
+      id: "guerra-mundial",
+      titulo: "GUERRAS MUNDIAIS",
+      descricao: "I e II Guerra Mundial",
+    },
+    {
+      id: "brasil-republica",
+      titulo: "BRASIL REPUBLICA",
+      descricao: "Da proclamacao ao presente",
+    },
   ],
   geografia: [
-    { id: 'climatologia', titulo: 'Climatologia', descricao: 'Climas e fenômenos' },
-    { id: 'geopolitica', titulo: 'Geopolítica', descricao: 'Relações entre países' },
-    { id: 'urbanizacao', titulo: 'Urbanização', descricao: 'Cidades e crescimento' },
-    { id: 'relevo', titulo: 'Relevo', descricao: 'Formações e processos' },
+    {
+      id: "climatologia",
+      titulo: "CLIMATOLOGIA",
+      descricao: "Climas e fenomenos",
+    },
+    {
+      id: "geopolitica",
+      titulo: "GEOPOLITICA",
+      descricao: "Relacoes entre paises",
+    },
+    {
+      id: "urbanizacao",
+      titulo: "URBANIZACAO",
+      descricao: "Cidades e crescimento",
+    },
+    { id: "relevo", titulo: "RELEVO", descricao: "Formacoes e processos" },
   ],
   fisica: [
-    { id: 'mecanica', titulo: 'Mecânica', descricao: 'Movimento e forças' },
-    { id: 'termodinamica', titulo: 'Termodinâmica', descricao: 'Calor e temperatura' },
-    { id: 'optica', titulo: 'Óptica', descricao: 'Luz e reflexão' },
-    { id: 'eletricidade', titulo: 'Eletricidade', descricao: 'Circuitos e corrente' },
+    { id: "mecanica", titulo: "MECANICA", descricao: "Movimento e forcas" },
+    {
+      id: "termodinamica",
+      titulo: "TERMODINAMICA",
+      descricao: "Calor e temperatura",
+    },
+    { id: "optica", titulo: "OPTICA", descricao: "Luz e reflexao" },
+    {
+      id: "eletricidade",
+      titulo: "ELETRICIDADE",
+      descricao: "Circuitos e corrente",
+    },
   ],
   quimica: [
-    { id: 'atomistica', titulo: 'Atomística', descricao: 'Estrutura do átomo' },
-    { id: 'ligacoes', titulo: 'Ligações Químicas', descricao: 'Iônica, covalente e metálica' },
-    { id: 'reacoes', titulo: 'Reações', descricao: 'Tipos e balanceamento' },
-    { id: 'solucoes', titulo: 'Soluções', descricao: 'Concentração e misturas' },
+    { id: "atomistica", titulo: "ATOMISTICA", descricao: "Estrutura do atomo" },
+    {
+      id: "ligacoes",
+      titulo: "LIGACOES QUIMICAS",
+      descricao: "Ionica e covalente",
+    },
+    { id: "reacoes", titulo: "REACOES", descricao: "Tipos e balanceamento" },
+    {
+      id: "solucoes",
+      titulo: "SOLUCOES",
+      descricao: "Concentracao e misturas",
+    },
   ],
   ingles: [
-    { id: 'gramatica-en', titulo: 'Grammar', descricao: 'Tenses and structures' },
-    { id: 'vocabulary', titulo: 'Vocabulary', descricao: 'Words and expressions' },
-    { id: 'reading', titulo: 'Reading', descricao: 'Text comprehension' },
-    { id: 'writing', titulo: 'Writing', descricao: 'Essays and composition' },
+    {
+      id: "gramatica-en",
+      titulo: "GRAMMAR",
+      descricao: "Tenses and structures",
+    },
+    {
+      id: "vocabulary",
+      titulo: "VOCABULARY",
+      descricao: "Words and expressions",
+    },
+    { id: "reading", titulo: "READING", descricao: "Text comprehension" },
+    { id: "writing", titulo: "WRITING", descricao: "Essays and composition" },
   ],
-}
+};
 
 const nomesMateria: Record<string, string> = {
-  matematica: '📐 Matemática',
-  portugues: '📝 Português',
-  biologia: '🧬 Biologia',
-  historia: '📜 História',
-  geografia: '🌍 Geografia',
-  fisica: '⚡ Física',
-  quimica: '🧪 Química',
-  ingles: '🌐 Inglês',
-}
+  matematica: "📐 MATEMATICA",
+  portugues: "📝 PORTUGUES",
+  biologia: "🧬 BIOLOGIA",
+  historia: "📜 HISTORIA",
+  geografia: "🌍 GEOGRAFIA",
+  fisica: "⚡ FISICA",
+  quimica: "🧪 QUIMICA",
+  ingles: "🌐 INGLES",
+};
 
 export default function TopicosScreen() {
-  const router = useRouter()
-  const { portal, materia } = useLocalSearchParams<{ portal: string; materia: string }>()
-  const topicos = topicosPorMateria[materia] ?? []
+  const router = useRouter();
+  const { portal, materia } = useLocalSearchParams<{
+    portal: string;
+    materia: string;
+  }>();
+  const topicos = topicosPorMateria[materia] ?? [];
+  const [sel, setSel] = useState(0);
 
   return (
     <ScrollView style={s.scroll} contentContainerStyle={s.container}>
-      <TouchableOpacity onPress={() => router.back()} style={s.btnVoltar}>
-        <Text style={s.txtVoltar}>← Voltar</Text>
-      </TouchableOpacity>
-
-      <Text style={s.materiaNome}>{nomesMateria[materia] ?? materia}</Text>
-      <Text style={s.titulo}>Escolha o tópico</Text>
-
-      {topicos.map((topico, index) => (
-        <TouchableOpacity
-          key={topico.id}
-          style={s.card}
-          onPress={() => router.push(`/pilulas?portal=${portal}&materia=${materia}&topico=${topico.id}`)}
-        >
-          <View style={s.numero}>
-            <Text style={s.numeroTexto}>{index + 1}</Text>
+      <View style={s.win}>
+        <View style={s.winInner}>
+          <View style={s.winTitle}>
+            <TouchableOpacity onPress={() => router.back()}>
+              <Text style={s.backTxt}>◀ VOLTAR</Text>
+            </TouchableOpacity>
           </View>
-          <View style={s.cardTexto}>
-            <Text style={s.cardTitulo}>{topico.titulo}</Text>
-            <Text style={s.cardDescricao}>{topico.descricao}</Text>
+          <View style={s.titleBody}>
+            <Text style={s.materiaNome}>
+              {nomesMateria[materia] ?? materia}
+            </Text>
+            <Text style={s.selectTxt}>SELECIONE O TOPICO</Text>
           </View>
-          <Text style={s.seta}>→</Text>
-        </TouchableOpacity>
-      ))}
+        </View>
+      </View>
+
+      <View style={s.win}>
+        <View style={s.winInner}>
+          <View style={s.winTitle}>
+            <Text style={s.winTitleTxt}>TOPICOS</Text>
+            <Text style={{ fontFamily: F, fontSize: 6, color: C.text3 }}>
+              {topicos.length} DISPONIVEL
+            </Text>
+          </View>
+          {topicos.map((t, i) => (
+            <TouchableOpacity
+              key={t.id}
+              style={[s.menuRow, sel === i && s.menuRowSel]}
+              onPress={() => {
+                setSel(i);
+                router.push(
+                  `/pilulas?portal=${portal}&materia=${materia}&topico=${t.id}`,
+                );
+              }}
+              activeOpacity={0.8}
+            >
+              <Text style={s.menuCursor}>{sel === i ? "▶" : " "}</Text>
+              <View style={s.numBox}>
+                <Text style={s.numTxt}>{String(i + 1).padStart(2, "0")}</Text>
+              </View>
+              <View style={s.menuBody}>
+                <Text style={s.menuName}>{t.titulo}</Text>
+                <Text style={s.menuDesc}>{t.descricao}</Text>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
     </ScrollView>
-  )
+  );
 }
 
 const s = StyleSheet.create({
-  scroll: {
-    flex: 1,
-    backgroundColor: '#1A1A2E',
+  scroll: { flex: 1, backgroundColor: C.bg },
+  container: { padding: 12, paddingTop: 48, gap: 4 },
+
+  win: { borderWidth: 1, borderColor: C.border, backgroundColor: C.panel },
+  winInner: { borderWidth: 1, borderColor: C.border2, margin: 2 },
+  winTitle: {
+    backgroundColor: C.panel,
+    borderBottomWidth: 1,
+    borderBottomColor: C.border,
+    paddingVertical: 5,
+    paddingHorizontal: 8,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
-  container: {
-    padding: 24,
-    paddingTop: 60,
+  winTitleTxt: { fontFamily: F, fontSize: 7, color: C.blue2, letterSpacing: 1 },
+  backTxt: { fontFamily: F, fontSize: 6, color: C.text3 },
+
+  titleBody: { padding: 10 },
+  materiaNome: { fontFamily: F, fontSize: 8, color: C.gold2, marginBottom: 6 },
+  selectTxt: { fontFamily: F, fontSize: 6, color: C.text3 },
+
+  menuRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: C.panel,
+    borderBottomWidth: 1,
+    borderBottomColor: C.border2,
+    padding: 10,
   },
-  btnVoltar: {
-    marginBottom: 24,
-  },
-  txtVoltar: {
-    color: '#4A90E2',
-    fontSize: 16,
-  },
-  materiaNome: {
-    color: '#888',
-    fontSize: 13,
-    marginBottom: 8,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  titulo: {
-    color: '#fff',
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 32,
-  },
-  card: {
-    backgroundColor: '#16213E',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
+  menuRowSel: { backgroundColor: C.sel, borderBottomColor: C.border },
+  menuCursor: { fontFamily: F, fontSize: 8, color: C.gold2, width: 10 },
+  numBox: {
+    width: 24,
+    height: 24,
+    backgroundColor: "#000",
     borderWidth: 1,
-    borderColor: '#333',
+    borderColor: C.border2,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  numero: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#0F3460',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
-  },
-  numeroTexto: {
-    color: '#4A90E2',
-    fontSize: 15,
-    fontWeight: 'bold',
-  },
-  cardTexto: {
-    flex: 1,
-  },
-  cardTitulo: {
-    color: '#fff',
-    fontSize: 15,
-    fontWeight: 'bold',
-    marginBottom: 4,
-  },
-  cardDescricao: {
-    color: '#888',
-    fontSize: 13,
-  },
-  seta: {
-    color: '#4A90E2',
-    fontSize: 20,
-  },
-})
+  numTxt: { fontFamily: F, fontSize: 6, color: C.blue2 },
+  menuBody: { flex: 1 },
+  menuName: { fontFamily: F, fontSize: 7, color: C.text, marginBottom: 2 },
+  menuDesc: { fontFamily: F, fontSize: 5, color: C.text3 },
+});
