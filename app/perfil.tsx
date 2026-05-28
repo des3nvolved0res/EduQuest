@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'expo-router'
 import { doc, onSnapshot } from 'firebase/firestore'
 import { auth, db } from '@/config/firebase'
-import { C, F } from '@/constants/theme'
+import { C, F, FS, PAD } from '@/constants/theme'
 
 type DadosAluno = {
   nome: string
@@ -54,194 +54,188 @@ export default function PerfilScreen() {
   const iniciais = dados?.nome?.split(' ').map(n => n[0]).slice(0, 2).join('') ?? '?'
 
   return (
-    <ScrollView style={s.scroll} contentContainerStyle={s.container}>
+    <View style={s.root}>
+      <ScrollView style={s.scroll} contentContainerStyle={s.container} showsVerticalScrollIndicator={false}>
 
-      {/* Header */}
-      <View style={s.win}>
-        <View style={s.winInner}>
-          <View style={s.winTitle}>
-            <TouchableOpacity onPress={() => router.back()}>
-              <Text style={s.backTxt}>◀ VOLTAR</Text>
-            </TouchableOpacity>
-            <Text style={s.winTitleTxt}>STATUS DO HEROI</Text>
-          </View>
-
-          {/* Avatar + nome */}
-          <View style={s.charRow}>
-            <View style={s.avatar}>
-              <Text style={s.avatarTxt}>{iniciais}</Text>
+        <View style={s.win}>
+          <View style={s.winInner}>
+            <View style={s.winTitle}>
+              <TouchableOpacity onPress={() => router.back()}>
+                <Text style={s.backTxt}>◀ VOLTAR</Text>
+              </TouchableOpacity>
+              <Text style={s.winTitleTxt}>STATUS DO HEROI</Text>
             </View>
-            <View style={s.charInfo}>
-              <Text style={s.charName}>{dados?.nome?.toUpperCase() ?? '...'}</Text>
-              <Text style={s.charEmail}>{dados?.email ?? '...'}</Text>
-              {cosmeticos.some(c => c.startsWith('titulo_')) && (
-                <View style={s.tituloBadge}>
-                  {cosmeticos.filter(c => c.startsWith('titulo_')).map(c => (
-                    <Text key={c} style={s.tituloTxt}>
-                      {todosCosmeticos[c]?.emoji} {todosCosmeticos[c]?.nome}
-                    </Text>
-                  ))}
-                </View>
-              )}
-            </View>
-          </View>
-        </View>
-      </View>
-
-      {/* Nível e progresso */}
-      <View style={s.win}>
-        <View style={s.winInner}>
-          <View style={s.winTitle}>
-            <Text style={s.winTitleTxt}>NIVEL {nivel}</Text>
-            <Text style={[s.winTitleTxt, { color: C.gold2 }]}>{xp} / {xpProximo} XP</Text>
-          </View>
-          <View style={s.nivelBody}>
-            <View style={s.progTrack}>
-              <View style={[s.progFill, { width: `${progresso}%` as any }]} />
-            </View>
-            <Text style={s.progSub}>
-              {xpProximo - xp} XP PARA O PROXIMO NIVEL
-            </Text>
-          </View>
-        </View>
-      </View>
-
-      {/* Stats */}
-      <View style={s.win}>
-        <View style={s.winInner}>
-          <View style={s.winTitle}>
-            <Text style={s.winTitleTxt}>ESTATISTICAS</Text>
-          </View>
-          <View style={s.statRow}>
-            <Text style={s.statLbl}>CRISTAIS</Text>
-            <Text style={[s.statVal, { color: C.green2 }]}>{dados?.pontosPermanentes ?? 0}</Text>
-          </View>
-          <View style={s.statRow}>
-            <Text style={s.statLbl}>BONUS CICLO</Text>
-            <Text style={[s.statVal, { color: C.purple2 }]}>{dados?.pontosTemporarios ?? 0}</Text>
-          </View>
-          <View style={s.statRow}>
-            <Text style={s.statLbl}>XP TOTAL</Text>
-            <Text style={[s.statVal, { color: C.blue2 }]}>
-              {(dados?.pontosPermanentes ?? 0) + (dados?.pontosTemporarios ?? 0)}
-            </Text>
-          </View>
-          <View style={[s.statRow, { borderBottomWidth: 0 }]}>
-            <Text style={s.statLbl}>MEMBRO DESDE</Text>
-            <Text style={[s.statVal, { color: C.text2 }]}>
-              {dados?.criadoEm
-                ? new Date(dados.criadoEm).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }).toUpperCase()
-                : '...'}
-            </Text>
-          </View>
-        </View>
-      </View>
-
-      {/* Conquistas */}
-      <View style={s.win}>
-        <View style={s.winInner}>
-          <View style={s.winTitle}>
-            <Text style={s.winTitleTxt}>CONQUISTAS</Text>
-            <Text style={[s.winTitleTxt, { color: C.text3 }]}>{cosmeticos.length} DESBLOQUEADO</Text>
-          </View>
-          {cosmeticos.length === 0 ? (
-            <View style={s.vazioBody}>
-              <Text style={s.vazioEmoji}>🔒</Text>
-              <Text style={s.vazioTxt}>NENHUMA CONQUISTA AINDA</Text>
-              <Text style={s.vazioSub}>Acumule XP e visite a loja</Text>
-            </View>
-          ) : (
-            cosmeticos.map(c => {
-              const item = todosCosmeticos[c]
-              if (!item) return null
-              return (
-                <View key={c} style={s.conquistaRow}>
-                  <Text style={s.menuCursor}>✓</Text>
-                  <Text style={s.menuIcon}>{item.emoji}</Text>
-                  <View style={s.menuBody}>
-                    <Text style={s.menuName}>{item.nome}</Text>
-                    <Text style={s.menuDesc}>{item.tipo}</Text>
+            <View style={s.charRow}>
+              <View style={s.avatar}>
+                <Text style={s.avatarTxt}>{iniciais}</Text>
+              </View>
+              <View style={s.charInfo}>
+                <Text style={s.charName}>{dados?.nome?.toUpperCase() ?? '...'}</Text>
+                <Text style={s.charEmail}>{dados?.email ?? '...'}</Text>
+                {cosmeticos.some(c => c.startsWith('titulo_')) && (
+                  <View style={s.tituloBadge}>
+                    {cosmeticos.filter(c => c.startsWith('titulo_')).map(c => (
+                      <Text key={c} style={s.tituloTxt}>
+                        {todosCosmeticos[c]?.emoji} {todosCosmeticos[c]?.nome}
+                      </Text>
+                    ))}
                   </View>
-                  <View style={[s.xpBadge, { borderColor: C.green }]}>
-                    <Text style={[s.xpTxt, { color: C.green2 }]}>ATIVO</Text>
-                  </View>
-                </View>
-              )
-            })
-          )}
+                )}
+              </View>
+            </View>
+          </View>
         </View>
-      </View>
 
-    </ScrollView>
+        <View style={s.win}>
+          <View style={s.winInner}>
+            <View style={s.winTitle}>
+              <Text style={s.winTitleTxt}>NIVEL {nivel}</Text>
+              <Text style={[s.winTitleTxt, { color: C.gold2 }]}>{xp} / {xpProximo} XP</Text>
+            </View>
+            <View style={s.nivelBody}>
+              <View style={s.progTrack}>
+                <View style={[s.progFill, { width: `${progresso}%` as any }]} />
+              </View>
+              <Text style={s.progSub}>{xpProximo - xp} XP PARA O PROXIMO NIVEL</Text>
+            </View>
+          </View>
+        </View>
+
+        <View style={s.win}>
+          <View style={s.winInner}>
+            <View style={s.winTitle}>
+              <Text style={s.winTitleTxt}>ESTATISTICAS</Text>
+            </View>
+            <View style={s.statRow}>
+              <Text style={s.statLbl}>CRISTAIS</Text>
+              <Text style={[s.statVal, { color: C.green2 }]}>{dados?.pontosPermanentes ?? 0}</Text>
+            </View>
+            <View style={s.statRow}>
+              <Text style={s.statLbl}>BONUS CICLO</Text>
+              <Text style={[s.statVal, { color: C.purple2 }]}>{dados?.pontosTemporarios ?? 0}</Text>
+            </View>
+            <View style={s.statRow}>
+              <Text style={s.statLbl}>XP TOTAL</Text>
+              <Text style={[s.statVal, { color: C.blue2 }]}>
+                {(dados?.pontosPermanentes ?? 0) + (dados?.pontosTemporarios ?? 0)}
+              </Text>
+            </View>
+            <View style={[s.statRow, { borderBottomWidth: 0 }]}>
+              <Text style={s.statLbl}>MEMBRO DESDE</Text>
+              <Text style={[s.statVal, { color: C.text2, fontSize: FS.small }]}>
+                {dados?.criadoEm
+                  ? new Date(dados.criadoEm).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }).toUpperCase()
+                  : '...'}
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        <View style={s.win}>
+          <View style={s.winInner}>
+            <View style={s.winTitle}>
+              <Text style={s.winTitleTxt}>CONQUISTAS</Text>
+              <Text style={s.winTitleSub}>{cosmeticos.length} DESBLOQUEADO</Text>
+            </View>
+            {cosmeticos.length === 0 ? (
+              <View style={s.vazioBody}>
+                <Text style={s.vazioEmoji}>🔒</Text>
+                <Text style={s.vazioTxt}>NENHUMA CONQUISTA AINDA</Text>
+                <Text style={s.vazioSub}>Acumule XP e visite a loja</Text>
+              </View>
+            ) : (
+              cosmeticos.map(c => {
+                const item = todosCosmeticos[c]
+                if (!item) return null
+                return (
+                  <View key={c} style={s.conquistaRow}>
+                    <Text style={s.menuCursor}>✓</Text>
+                    <Text style={s.menuIcon}>{item.emoji}</Text>
+                    <View style={s.menuBody}>
+                      <Text style={s.menuName}>{item.nome}</Text>
+                      <Text style={s.menuDesc}>{item.tipo}</Text>
+                    </View>
+                    <View style={[s.xpBadge, { borderColor: C.green }]}>
+                      <Text style={[s.xpTxt, { color: C.green2 }]}>ATIVO</Text>
+                    </View>
+                  </View>
+                )
+              })
+            )}
+          </View>
+        </View>
+
+      </ScrollView>
+    </View>
   )
 }
 
 const s = StyleSheet.create({
-  scroll: { flex: 1, backgroundColor: C.bg },
-  container: { padding: 12, paddingTop: 48, gap: 4 },
+  root: { flex: 1, backgroundColor: C.bg },
+  scroll: { flex: 1 },
+  container: { padding: PAD.screen, paddingTop: PAD.top, paddingBottom: 32, gap: 8 },
 
   win: { borderWidth: 1, borderColor: C.border, backgroundColor: C.panel },
   winInner: { borderWidth: 1, borderColor: C.border2, margin: 2 },
   winTitle: {
     backgroundColor: C.panel,
     borderBottomWidth: 1, borderBottomColor: C.border,
-    paddingVertical: 5, paddingHorizontal: 8,
+    paddingVertical: 8, paddingHorizontal: 12,
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
   },
-  winTitleTxt: { fontFamily: F, fontSize: 7, color: C.blue2, letterSpacing: 1 },
-  backTxt: { fontFamily: F, fontSize: 6, color: C.text3 },
+  winTitleTxt: { fontFamily: F, fontSize: FS.title, color: C.blue2, letterSpacing: 1 },
+  winTitleSub: { fontFamily: F, fontSize: FS.small, color: C.text3 },
+  backTxt: { fontFamily: F, fontSize: FS.small, color: C.text3 },
 
-  charRow: { flexDirection: 'row', gap: 12, padding: 12 },
+  charRow: { flexDirection: 'row', gap: 14, padding: 14 },
   avatar: {
-    width: 56, height: 56,
+    width: 64, height: 64,
     backgroundColor: '#001428',
     borderWidth: 1, borderColor: C.border,
     alignItems: 'center', justifyContent: 'center',
   },
-  avatarTxt: { fontFamily: F, fontSize: 14, color: C.blue2 },
+  avatarTxt: { fontFamily: F, fontSize: 16, color: C.blue2 },
   charInfo: { flex: 1, justifyContent: 'center' },
-  charName: { fontFamily: F, fontSize: 9, color: C.text, marginBottom: 4 },
-  charEmail: { fontFamily: F, fontSize: 5, color: C.text3, marginBottom: 6 },
+  charName: { fontFamily: F, fontSize: FS.sub, color: C.text, marginBottom: 5 },
+  charEmail: { fontFamily: F, fontSize: FS.tiny, color: C.text3, marginBottom: 8 },
   tituloBadge: {
-    backgroundColor: '#000',
-    borderWidth: 1, borderColor: C.gold,
-    paddingHorizontal: 6, paddingVertical: 3,
+    backgroundColor: '#000', borderWidth: 1, borderColor: C.gold,
+    paddingHorizontal: 8, paddingVertical: 4,
   },
-  tituloTxt: { fontFamily: F, fontSize: 5, color: C.gold2 },
+  tituloTxt: { fontFamily: F, fontSize: FS.tiny, color: C.gold2 },
 
-  nivelBody: { padding: 12 },
+  nivelBody: { padding: 14 },
   progTrack: {
-    height: 8, backgroundColor: '#000',
+    height: 10, backgroundColor: '#000',
     borderWidth: 1, borderColor: C.border2,
-    overflow: 'hidden', marginBottom: 6,
+    overflow: 'hidden', marginBottom: 8,
   },
   progFill: { height: '100%', backgroundColor: C.blue },
-  progSub: { fontFamily: F, fontSize: 6, color: C.text3 },
+  progSub: { fontFamily: F, fontSize: FS.small, color: C.text3 },
 
   statRow: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    padding: 10,
-    borderBottomWidth: 1, borderBottomColor: C.border2,
+    padding: 14, borderBottomWidth: 1, borderBottomColor: C.border2,
   },
-  statLbl: { fontFamily: F, fontSize: 6, color: C.text2 },
-  statVal: { fontFamily: F, fontSize: 9 },
+  statLbl: { fontFamily: F, fontSize: FS.small, color: C.text2 },
+  statVal: { fontFamily: F, fontSize: FS.sub },
 
-  vazioBody: { padding: 20, alignItems: 'center' },
-  vazioEmoji: { fontSize: 32, marginBottom: 10 },
-  vazioTxt: { fontFamily: F, fontSize: 7, color: C.text3, marginBottom: 6 },
-  vazioSub: { fontFamily: F, fontSize: 6, color: C.text3 },
+  vazioBody: { padding: 24, alignItems: 'center' },
+  vazioEmoji: { fontSize: 36, marginBottom: 12 },
+  vazioTxt: { fontFamily: F, fontSize: FS.small, color: C.text3, marginBottom: 6 },
+  vazioSub: { fontFamily: F, fontSize: FS.tiny, color: C.text3 },
 
   conquistaRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 8,
+    flexDirection: 'row', alignItems: 'center', gap: 10,
     backgroundColor: C.panel,
     borderBottomWidth: 1, borderBottomColor: C.border2,
-    padding: 10,
+    padding: PAD.item,
   },
-  menuCursor: { fontFamily: F, fontSize: 8, color: C.green2, width: 10 },
-  menuIcon: { fontSize: 14, width: 20, textAlign: 'center' },
+  menuCursor: { fontFamily: F, fontSize: 12, color: C.green2, width: 16 },
+  menuIcon: { fontSize: 22, width: 28, textAlign: 'center' },
   menuBody: { flex: 1 },
-  menuName: { fontFamily: F, fontSize: 7, color: C.text, marginBottom: 2 },
-  menuDesc: { fontFamily: F, fontSize: 5, color: C.text3 },
-  xpBadge: { borderWidth: 1, paddingHorizontal: 5, paddingVertical: 2 },
-  xpTxt: { fontFamily: F, fontSize: 5 },
+  menuName: { fontFamily: F, fontSize: FS.body, color: C.text, marginBottom: 4 },
+  menuDesc: { fontFamily: F, fontSize: FS.tiny, color: C.text3 },
+  xpBadge: { borderWidth: 1, paddingHorizontal: 6, paddingVertical: 3 },
+  xpTxt: { fontFamily: F, fontSize: FS.tiny },
 })

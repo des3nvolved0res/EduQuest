@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { useRouter } from 'expo-router'
 import { collection, query, where, getDocs, updateDoc, doc } from 'firebase/firestore'
 import { db } from '@/config/firebase'
-import { C, F } from '@/constants/theme'
+import { C, F, FS, PAD } from '@/constants/theme'
 
 type Voucher = {
   id: string
@@ -59,135 +59,132 @@ export default function ValidarScreen() {
   }
 
   return (
-    <ScrollView style={s.scroll} contentContainerStyle={s.container}>
+    <View style={s.root}>
+      <ScrollView style={s.scroll} contentContainerStyle={s.container} showsVerticalScrollIndicator={false}>
 
-      {/* Header */}
-      <View style={s.win}>
-        <View style={s.winInner}>
-          <View style={s.winTitle}>
-            <TouchableOpacity onPress={() => router.back()}>
-              <Text style={s.backTxt}>◀ VOLTAR</Text>
-            </TouchableOpacity>
-            <Text style={s.winTitleTxt}>🎟 VALIDAR VOUCHER</Text>
-          </View>
-          <View style={s.titleBody}>
-            <Text style={s.titleSub}>DIGITE O CODIGO APRESENTADO PELO ALUNO</Text>
-          </View>
-        </View>
-      </View>
-
-      {/* Campo de busca */}
-      <View style={s.win}>
-        <View style={s.winInner}>
-          <View style={s.winTitle}>
-            <Text style={s.winTitleTxt}>CODIGO DO VOUCHER</Text>
-          </View>
-          <View style={s.searchBody}>
-            <TextInput
-              style={s.input}
-              value={codigo}
-              onChangeText={setCodigo}
-              placeholder="EX: EQ-ABC12345"
-              placeholderTextColor={C.text3}
-              autoCapitalize="characters"
-            />
-            <TouchableOpacity
-              style={s.btnGreen}
-              onPress={buscar}
-              disabled={buscando}
-              activeOpacity={0.8}
-            >
-              <Text style={s.btnGreenTxt}>
-                {buscando ? 'BUSCANDO...' : '▶ BUSCAR'}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </View>
-
-      {/* Resultado */}
-      {voucher && (
-        <>
-          <View style={s.win}>
-            <View style={[s.winInner, { borderColor: voucher.validado ? C.green : C.gold }]}>
-              <View style={s.winTitle}>
-                <Text style={[s.winTitleTxt, { color: C.gold2 }]}>{voucher.codigo}</Text>
-                {voucher.validado && (
-                  <View style={[s.badge, { borderColor: C.green }]}>
-                    <Text style={[s.badgeTxt, { color: C.green2 }]}>✓ VALIDADO</Text>
-                  </View>
-                )}
-              </View>
-              <View style={s.statRow}>
-                <Text style={s.statLbl}>ALUNO</Text>
-                <Text style={s.statVal}>{voucher.nomeAluno}</Text>
-              </View>
-              <View style={s.statRow}>
-                <Text style={s.statLbl}>MATERIA</Text>
-                <Text style={s.statVal}>{voucher.nomeMateria}</Text>
-              </View>
-              <View style={s.statRow}>
-                <Text style={s.statLbl}>XP CONQUISTADO</Text>
-                <Text style={[s.statVal, { color: C.blue2 }]}>{voucher.xp} XP</Text>
-              </View>
-              <View style={[s.statRow, { borderBottomWidth: 0 }]}>
-                <Text style={s.statLbl}>GERADO EM</Text>
-                <Text style={s.statVal}>
-                  {new Date(voucher.criadoEm).toLocaleDateString('pt-BR')}
-                </Text>
-              </View>
+        <View style={s.win}>
+          <View style={s.winInner}>
+            <View style={s.winTitle}>
+              <TouchableOpacity onPress={() => router.back()}>
+                <Text style={s.backTxt}>◀ VOLTAR</Text>
+              </TouchableOpacity>
+              <Text style={s.winTitleTxt}>🎟 VALIDAR VOUCHER</Text>
+            </View>
+            <View style={s.titleBody}>
+              <Text style={s.titleSub}>DIGITE O CODIGO APRESENTADO PELO ALUNO</Text>
             </View>
           </View>
+        </View>
 
-          {!voucher.validado && (
+        <View style={s.win}>
+          <View style={s.winInner}>
+            <View style={s.winTitle}>
+              <Text style={s.winTitleTxt}>CODIGO DO VOUCHER</Text>
+            </View>
+            <View style={s.searchBody}>
+              <TextInput
+                style={s.input}
+                value={codigo}
+                onChangeText={setCodigo}
+                placeholder="EX: EQ-ABC12345"
+                placeholderTextColor={C.text3}
+                autoCapitalize="characters"
+              />
+              <TouchableOpacity
+                style={s.btnGreen}
+                onPress={buscar}
+                disabled={buscando}
+                activeOpacity={0.8}
+              >
+                <Text style={s.btnGreenTxt}>{buscando ? 'BUSCANDO...' : '▶ BUSCAR'}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+
+        {voucher && (
+          <>
             <View style={s.win}>
-              <View style={s.winInner}>
-                <TouchableOpacity
-                  style={s.btnGreen}
-                  onPress={validar}
-                  disabled={validando}
-                  activeOpacity={0.8}
-                >
-                  <Text style={s.btnGreenTxt}>
-                    {validando ? 'VALIDANDO...' : '✓ CONFIRMAR BONUS'}
+              <View style={[s.winInner, { borderColor: voucher.validado ? C.green : C.gold }]}>
+                <View style={s.winTitle}>
+                  <Text style={[s.winTitleTxt, { color: C.gold2 }]}>{voucher.codigo}</Text>
+                  {voucher.validado && (
+                    <View style={[s.badge, { borderColor: C.green }]}>
+                      <Text style={[s.badgeTxt, { color: C.green2 }]}>✓ VALIDADO</Text>
+                    </View>
+                  )}
+                </View>
+                <View style={s.statRow}>
+                  <Text style={s.statLbl}>ALUNO</Text>
+                  <Text style={s.statVal}>{voucher.nomeAluno}</Text>
+                </View>
+                <View style={s.statRow}>
+                  <Text style={s.statLbl}>MATERIA</Text>
+                  <Text style={s.statVal}>{voucher.nomeMateria}</Text>
+                </View>
+                <View style={s.statRow}>
+                  <Text style={s.statLbl}>XP CONQUISTADO</Text>
+                  <Text style={[s.statVal, { color: C.blue2 }]}>{voucher.xp} XP</Text>
+                </View>
+                <View style={[s.statRow, { borderBottomWidth: 0 }]}>
+                  <Text style={s.statLbl}>GERADO EM</Text>
+                  <Text style={s.statVal}>
+                    {new Date(voucher.criadoEm).toLocaleDateString('pt-BR')}
                   </Text>
-                </TouchableOpacity>
+                </View>
               </View>
             </View>
-          )}
-        </>
-      )}
 
-    </ScrollView>
+            {!voucher.validado && (
+              <View style={s.win}>
+                <View style={s.winInner}>
+                  <TouchableOpacity
+                    style={s.btnGreen}
+                    onPress={validar}
+                    disabled={validando}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={s.btnGreenTxt}>
+                      {validando ? 'VALIDANDO...' : '✓ CONFIRMAR BONUS'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+          </>
+        )}
+
+      </ScrollView>
+    </View>
   )
 }
 
 const s = StyleSheet.create({
-  scroll: { flex: 1, backgroundColor: C.bg },
-  container: { padding: 12, paddingTop: 48, gap: 4 },
+  root: { flex: 1, backgroundColor: C.bg },
+  scroll: { flex: 1 },
+  container: { padding: PAD.screen, paddingTop: PAD.top, paddingBottom: 32, gap: 8 },
 
   win: { borderWidth: 1, borderColor: C.border, backgroundColor: C.panel },
   winInner: { borderWidth: 1, borderColor: C.border2, margin: 2 },
   winTitle: {
     backgroundColor: C.panel,
     borderBottomWidth: 1, borderBottomColor: C.border,
-    paddingVertical: 5, paddingHorizontal: 8,
+    paddingVertical: 8, paddingHorizontal: 12,
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
   },
-  winTitleTxt: { fontFamily: F, fontSize: 7, color: C.blue2, letterSpacing: 1 },
-  backTxt: { fontFamily: F, fontSize: 6, color: C.text3 },
+  winTitleTxt: { fontFamily: F, fontSize: FS.title, color: C.blue2, letterSpacing: 1 },
+  backTxt: { fontFamily: F, fontSize: FS.small, color: C.text3 },
 
-  titleBody: { padding: 10 },
-  titleSub: { fontFamily: F, fontSize: 6, color: C.text3 },
+  titleBody: { padding: PAD.win },
+  titleSub: { fontFamily: F, fontSize: FS.small, color: C.text3 },
 
-  searchBody: { padding: 10 },
+  searchBody: { padding: PAD.win },
   input: {
     backgroundColor: C.bg,
     borderWidth: 1, borderColor: C.border,
-    padding: 10, color: C.text,
-    fontFamily: F, fontSize: 8,
-    marginBottom: 8,
-    letterSpacing: 2,
+    padding: 12, color: C.text,
+    fontFamily: F, fontSize: FS.body,
+    marginBottom: 10, letterSpacing: 2,
   },
 
   btnGreen: {
@@ -196,21 +193,18 @@ const s = StyleSheet.create({
     borderBottomWidth: 2, borderRightWidth: 2,
     borderTopColor: C.green2, borderLeftColor: C.green2,
     borderBottomColor: '#104830', borderRightColor: '#104830',
-    paddingVertical: 12, alignItems: 'center',
-    margin: 8,
+    paddingVertical: 16, alignItems: 'center',
+    margin: 10,
   },
-  btnGreenTxt: { fontFamily: F, fontSize: 7, color: '#000', letterSpacing: 1 },
+  btnGreenTxt: { fontFamily: F, fontSize: FS.body, color: '#000', letterSpacing: 1 },
 
   statRow: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    padding: 10,
-    borderBottomWidth: 1, borderBottomColor: C.border2,
+    padding: 14, borderBottomWidth: 1, borderBottomColor: C.border2,
   },
-  statLbl: { fontFamily: F, fontSize: 6, color: C.text2 },
-  statVal: { fontFamily: F, fontSize: 7, color: C.text },
+  statLbl: { fontFamily: F, fontSize: FS.small, color: C.text2 },
+  statVal: { fontFamily: F, fontSize: FS.small, color: C.text },
 
-  badge: {
-    borderWidth: 1, paddingHorizontal: 6, paddingVertical: 2,
-  },
-  badgeTxt: { fontFamily: F, fontSize: 5 },
+  badge: { borderWidth: 1, paddingHorizontal: 8, paddingVertical: 3 },
+  badgeTxt: { fontFamily: F, fontSize: FS.tiny },
 })

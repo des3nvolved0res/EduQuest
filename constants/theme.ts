@@ -25,3 +25,21 @@ export const C = {
 };
 
 export const F = "PressStart2P_400Regular";
+
+
+export const FS = {
+  logo:   20,  // logo principal
+  title:  11,  // título das janelas
+  name:   14,  // nome do personagem
+  body:   10,  // texto principal dos menus
+  sub:    9,   // subtítulos e descrições
+  small:  8,   // labels e valores
+  tiny:   7,   // badges e info secundária,   
+}
+
+export const PAD = {
+  screen: 14,   // padding das telas
+  win:    12,   // padding interno das janelas
+  item:   18,   // padding dos itens de menu
+  top:    56,   // paddingTop das telas
+}

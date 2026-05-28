@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'expo-router'
 import { collection, getDocs } from 'firebase/firestore'
 import { db } from '@/config/firebase'
-import { C, F } from '@/constants/theme'
+import { C, F, FS, PAD } from '@/constants/theme'
 
 type Aluno = {
   id: string
@@ -32,7 +32,6 @@ export default function DashboardScreen() {
         })
         lista.sort((a, b) => b.pontosPermanentes - a.pontosPermanentes)
         setAlunos(lista)
-
         const snapVouchers = await getDocs(collection(db, 'vouchers'))
         setTotalVouchers(snapVouchers.size)
         setVouchersValidados(snapVouchers.docs.filter(d => d.data().validado).length)
@@ -55,150 +54,145 @@ export default function DashboardScreen() {
   }
 
   return (
-    <ScrollView style={s.scroll} contentContainerStyle={s.container}>
+    <View style={s.root}>
+      <ScrollView style={s.scroll} contentContainerStyle={s.container} showsVerticalScrollIndicator={false}>
 
-      {/* Header */}
-      <View style={s.win}>
-        <View style={s.winInner}>
-          <View style={s.winTitle}>
-            <TouchableOpacity onPress={() => router.back()}>
-              <Text style={s.backTxt}>◀ VOLTAR</Text>
-            </TouchableOpacity>
-            <Text style={s.winTitleTxt}>📊 RANKING DA TURMA</Text>
-          </View>
-        </View>
-      </View>
-
-      {/* Stats gerais */}
-      <View style={s.win}>
-        <View style={s.winInner}>
-          <View style={s.winTitle}>
-            <Text style={s.winTitleTxt}>ESTATISTICAS GERAIS</Text>
-          </View>
-          <View style={s.statsRow}>
-            <View style={s.statBox}>
-              <Text style={[s.statVal, { color: C.blue2 }]}>{alunos.length}</Text>
-              <Text style={s.statLbl}>ALUNOS</Text>
-            </View>
-            <View style={s.statBox}>
-              <Text style={[s.statVal, { color: C.gold2 }]}>{mediaXP}</Text>
-              <Text style={s.statLbl}>XP MEDIO</Text>
-            </View>
-            <View style={s.statBox}>
-              <Text style={[s.statVal, { color: C.green2 }]}>{vouchersValidados}/{totalVouchers}</Text>
-              <Text style={s.statLbl}>VOUCHERS</Text>
+        <View style={s.win}>
+          <View style={s.winInner}>
+            <View style={s.winTitle}>
+              <TouchableOpacity onPress={() => router.back()}>
+                <Text style={s.backTxt}>◀ VOLTAR</Text>
+              </TouchableOpacity>
+              <Text style={s.winTitleTxt}>📊 RANKING DA TURMA</Text>
             </View>
           </View>
         </View>
-      </View>
 
-      {/* Ranking */}
-      <View style={s.win}>
-        <View style={s.winInner}>
-          <View style={s.winTitle}>
-            <Text style={s.winTitleTxt}>TOP AVENTUREIROS</Text>
-            <Text style={[s.winTitleTxt, { color: C.text3 }]}>{alunos.length} CADASTRADOS</Text>
+        <View style={s.win}>
+          <View style={s.winInner}>
+            <View style={s.winTitle}>
+              <Text style={s.winTitleTxt}>ESTATISTICAS GERAIS</Text>
+            </View>
+            <View style={s.statsRow}>
+              <View style={s.statBox}>
+                <Text style={[s.statVal, { color: C.blue2 }]}>{alunos.length}</Text>
+                <Text style={s.statLbl}>ALUNOS</Text>
+              </View>
+              <View style={s.statBox}>
+                <Text style={[s.statVal, { color: C.gold2 }]}>{mediaXP}</Text>
+                <Text style={s.statLbl}>XP MEDIO</Text>
+              </View>
+              <View style={s.statBox}>
+                <Text style={[s.statVal, { color: C.green2 }]}>{vouchersValidados}/{totalVouchers}</Text>
+                <Text style={s.statLbl}>VOUCHERS</Text>
+              </View>
+            </View>
           </View>
+        </View>
 
-          {carregando ? (
-            <View style={s.vazioBody}>
-              <Text style={s.vazioTxt}>CARREGANDO...</Text>
+        <View style={s.win}>
+          <View style={s.winInner}>
+            <View style={s.winTitle}>
+              <Text style={s.winTitleTxt}>TOP AVENTUREIROS</Text>
+              <Text style={s.winTitleSub}>{alunos.length} CADASTRADOS</Text>
             </View>
-          ) : alunos.length === 0 ? (
-            <View style={s.vazioBody}>
-              <Text style={s.vazioEmoji}>📭</Text>
-              <Text style={s.vazioTxt}>NENHUM ALUNO CADASTRADO</Text>
-            </View>
-          ) : (
-            alunos.map((aluno, i) => (
-              <View
-                key={aluno.id}
-                style={[s.rankRow, i === 0 && { borderBottomColor: C.gold }]}
-              >
-                <Text style={[s.rankPos, i < 3 && { fontSize: 14 }]}>
-                  {medalha(i)}
-                </Text>
-                <View style={s.rankInfo}>
-                  <Text style={s.rankNome}>{aluno.nome.toUpperCase()}</Text>
-                  <View style={s.rankBarWrap}>
-                    <View style={s.rankBarTrack}>
-                      <View style={[s.rankBarFill, {
-                        width: `${Math.min((aluno.pontosPermanentes / 500) * 100, 100)}%` as any,
-                        backgroundColor: i === 0 ? C.gold : i === 1 ? C.text2 : C.blue,
-                      }]} />
+
+            {carregando ? (
+              <View style={s.vazioBody}>
+                <Text style={s.vazioTxt}>CARREGANDO...</Text>
+              </View>
+            ) : alunos.length === 0 ? (
+              <View style={s.vazioBody}>
+                <Text style={s.vazioEmoji}>📭</Text>
+                <Text style={s.vazioTxt}>NENHUM ALUNO CADASTRADO</Text>
+              </View>
+            ) : (
+              alunos.map((aluno, i) => (
+                <View key={aluno.id} style={[s.rankRow, i === 0 && { borderBottomColor: C.gold }]}>
+                  <Text style={[s.rankPos, i < 3 && { fontSize: 18 }]}>
+                    {medalha(i)}
+                  </Text>
+                  <View style={s.rankInfo}>
+                    <Text style={s.rankNome}>{aluno.nome.toUpperCase()}</Text>
+                    <View style={s.rankBarWrap}>
+                      <View style={s.rankBarTrack}>
+                        <View style={[s.rankBarFill, {
+                          width: `${Math.min((aluno.pontosPermanentes / 500) * 100, 100)}%` as any,
+                          backgroundColor: i === 0 ? C.gold : i === 1 ? C.text2 : C.blue,
+                        }]} />
+                      </View>
+                      <Text style={[s.rankXP, {
+                        color: i === 0 ? C.gold2 : i === 1 ? C.text2 : C.blue2
+                      }]}>
+                        {aluno.pontosPermanentes}XP
+                      </Text>
                     </View>
-                    <Text style={[s.rankXP, {
-                      color: i === 0 ? C.gold2 : i === 1 ? C.text2 : C.blue2
-                    }]}>
-                      {aluno.pontosPermanentes}XP
-                    </Text>
+                  </View>
+                  <View style={s.nivelBadge}>
+                    <Text style={s.nivelTxt}>NV{aluno.nivel}</Text>
                   </View>
                 </View>
-                <View style={s.nivelBadge}>
-                  <Text style={s.nivelTxt}>NV{aluno.nivel}</Text>
-                </View>
-              </View>
-            ))
-          )}
+              ))
+            )}
+          </View>
         </View>
-      </View>
 
-    </ScrollView>
+      </ScrollView>
+    </View>
   )
 }
 
 const s = StyleSheet.create({
-  scroll: { flex: 1, backgroundColor: C.bg },
-  container: { padding: 12, paddingTop: 48, gap: 4 },
+  root: { flex: 1, backgroundColor: C.bg },
+  scroll: { flex: 1 },
+  container: { padding: PAD.screen, paddingTop: PAD.top, paddingBottom: 32, gap: 8 },
 
   win: { borderWidth: 1, borderColor: C.border, backgroundColor: C.panel },
   winInner: { borderWidth: 1, borderColor: C.border2, margin: 2 },
   winTitle: {
     backgroundColor: C.panel,
     borderBottomWidth: 1, borderBottomColor: C.border,
-    paddingVertical: 5, paddingHorizontal: 8,
+    paddingVertical: 8, paddingHorizontal: 12,
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
   },
-  winTitleTxt: { fontFamily: F, fontSize: 7, color: C.blue2, letterSpacing: 1 },
-  backTxt: { fontFamily: F, fontSize: 6, color: C.text3 },
+  winTitleTxt: { fontFamily: F, fontSize: FS.title, color: C.blue2, letterSpacing: 1 },
+  winTitleSub: { fontFamily: F, fontSize: FS.small, color: C.text3 },
+  backTxt: { fontFamily: F, fontSize: FS.small, color: C.text3 },
 
-  statsRow: { flexDirection: 'row', padding: 8, gap: 6 },
+  statsRow: { flexDirection: 'row', padding: 10, gap: 8 },
   statBox: {
     flex: 1, backgroundColor: '#000',
     borderWidth: 1, borderColor: C.border2,
-    padding: 10, alignItems: 'center',
+    padding: 12, alignItems: 'center',
   },
-  statVal: { fontFamily: F, fontSize: 14, marginBottom: 4 },
-  statLbl: { fontFamily: F, fontSize: 5, color: C.text3 },
+  statVal: { fontFamily: F, fontSize: 16, marginBottom: 5 },
+  statLbl: { fontFamily: F, fontSize: FS.tiny, color: C.text3 },
 
   rankRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 10,
-    padding: 10,
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    padding: 14,
     borderBottomWidth: 1, borderBottomColor: C.border2,
   },
-  rankPos: {
-    fontFamily: F, fontSize: 7,
-    color: C.text3, width: 24, textAlign: 'center',
-  },
+  rankPos: { fontFamily: F, fontSize: FS.small, color: C.text3, width: 28, textAlign: 'center' },
   rankInfo: { flex: 1 },
-  rankNome: { fontFamily: F, fontSize: 7, color: C.text, marginBottom: 4 },
-  rankBarWrap: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  rankNome: { fontFamily: F, fontSize: FS.body, color: C.text, marginBottom: 6 },
+  rankBarWrap: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   rankBarTrack: {
-    flex: 1, height: 5,
+    flex: 1, height: 6,
     backgroundColor: '#000',
     borderWidth: 1, borderColor: C.border2,
     overflow: 'hidden',
   },
   rankBarFill: { height: '100%' },
-  rankXP: { fontFamily: F, fontSize: 6, minWidth: 40, textAlign: 'right' },
+  rankXP: { fontFamily: F, fontSize: FS.small, minWidth: 48, textAlign: 'right' },
   nivelBadge: {
     backgroundColor: '#000',
     borderWidth: 1, borderColor: C.border2,
-    paddingHorizontal: 6, paddingVertical: 3,
+    paddingHorizontal: 8, paddingVertical: 4,
   },
-  nivelTxt: { fontFamily: F, fontSize: 5, color: C.blue2 },
+  nivelTxt: { fontFamily: F, fontSize: FS.tiny, color: C.blue2 },
 
-  vazioBody: { padding: 20, alignItems: 'center' as const },
-  vazioEmoji: { fontSize: 32, marginBottom: 10 },
-  vazioTxt: { fontFamily: F, fontSize: 7, color: C.text3 },
+  vazioBody: { padding: 24, alignItems: 'center' },
+  vazioEmoji: { fontSize: 36, marginBottom: 12 },
+  vazioTxt: { fontFamily: F, fontSize: FS.small, color: C.text3 },
 })

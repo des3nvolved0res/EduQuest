@@ -1,7 +1,7 @@
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native'
 import { useRouter, useLocalSearchParams } from 'expo-router'
-import { useEffect, useState } from 'react'
-import { C, F } from '@/constants/theme'
+import { useState } from 'react'
+import { C, F, FS, PAD } from '@/constants/theme'
 
 const materias = [
   { id: 'matematica', nome: 'MATEMATICA', icon: '📐', cor: C.blue },
@@ -33,125 +33,107 @@ export default function MateriasScreen() {
   const dias = calcularDiasRestantes()
 
   return (
-    <ScrollView style={s.scroll} contentContainerStyle={s.container}>
+    <View style={s.root}>
+      <ScrollView style={s.scroll} contentContainerStyle={s.container} showsVerticalScrollIndicator={false}>
 
-      {/* Janela título */}
-      <View style={s.win}>
-        <View style={s.winInner}>
-          <View style={s.winTitle}>
-            <TouchableOpacity onPress={() => router.back()}>
-              <Text style={s.backTxt}>◀ VOLTAR</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={s.titleBody}>
-            <Text style={s.portalName}>{nomePortal[portal] ?? 'PORTAL'}</Text>
-            <Text style={s.selectTxt}>SELECIONE A DISCIPLINA</Text>
-          </View>
-        </View>
-      </View>
-
-      {/* Contador ciclos */}
-      {portal === 'ciclos' && (
         <View style={s.win}>
           <View style={s.winInner}>
-            <View style={s.counterRow}>
-              <Text style={s.counterIcon}>⏳</Text>
-              <View style={s.counterInfo}>
-                <Text style={s.counterTitle}>
-                  {dias === 1 ? 'FALTA 1 DIA PARA O FIM DO CICLO!' : `FALTAM ${dias} DIAS PARA O FIM DO CICLO`}
-                </Text>
-                <Text style={s.counterSub}>Pontos temporarios expiram no fim do mes</Text>
-              </View>
+            <View style={s.winTitle}>
+              <TouchableOpacity onPress={() => router.back()}>
+                <Text style={s.backTxt}>◀ VOLTAR</Text>
+              </TouchableOpacity>
+              <Text style={s.winTitleTxt}>{nomePortal[portal] ?? 'PORTAL'}</Text>
+            </View>
+            <View style={s.titleBody}>
+              <Text style={s.titleSub}>SELECIONE A DISCIPLINA</Text>
             </View>
           </View>
         </View>
-      )}
 
-      {/* Lista de matérias */}
-      <View style={s.win}>
-        <View style={s.winInner}>
-          <View style={s.winTitle}>
-            <Text style={s.winTitleTxt}>DISCIPLINAS</Text>
+        {portal === 'ciclos' && (
+          <View style={s.win}>
+            <View style={s.winInner}>
+              <View style={s.counterRow}>
+                <Text style={s.counterIcon}>⏳</Text>
+                <View style={s.counterInfo}>
+                  <Text style={s.counterTitle}>
+                    {dias === 1 ? 'FALTA 1 DIA PARA O FIM DO CICLO!' : `FALTAM ${dias} DIAS`}
+                  </Text>
+                  <Text style={s.counterSub}>Pontos temporarios expiram no fim do mes</Text>
+                </View>
+              </View>
+            </View>
           </View>
-          {materias.map((m, i) => (
-            <TouchableOpacity
-              key={m.id}
-              style={[s.menuRow, sel === i && s.menuRowSel]}
-              onPress={() => {
-                setSel(i)
-                router.push(`/topicos?portal=${portal}&materia=${m.id}`)
-              }}
-              activeOpacity={0.8}
-            >
-              <Text style={s.menuCursor}>{sel === i ? '▶' : ' '}</Text>
-              <Text style={s.menuIcon}>{m.icon}</Text>
-              <View style={s.menuBody}>
-                <Text style={s.menuName}>{m.nome}</Text>
-              </View>
-              <View style={[s.xpBadge, { borderColor: m.cor }]}>
-                <Text style={[s.xpTxt, { color: m.cor }]}>0 XP</Text>
-              </View>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
+        )}
 
-    </ScrollView>
+        <View style={s.win}>
+          <View style={s.winInner}>
+            <View style={s.winTitle}>
+              <Text style={s.winTitleTxt}>DISCIPLINAS</Text>
+              <Text style={s.winTitleSub}>{materias.length} DISPONIVEIS</Text>
+            </View>
+            {materias.map((m, i) => (
+              <TouchableOpacity
+                key={m.id}
+                style={[s.menuRow, sel === i && s.menuRowSel]}
+                onPress={() => { setSel(i); router.push(`/topicos?portal=${portal}&materia=${m.id}`) }}
+                activeOpacity={0.8}
+              >
+                <Text style={s.menuCursor}>{sel === i ? '▶' : ' '}</Text>
+                <Text style={s.menuIcon}>{m.icon}</Text>
+                <Text style={s.menuName}>{m.nome}</Text>
+                <View style={[s.xpBadge, { borderColor: m.cor }]}>
+                  <Text style={[s.xpTxt, { color: m.cor }]}>0 XP</Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+      </ScrollView>
+    </View>
   )
 }
 
 const s = StyleSheet.create({
-  scroll: { flex: 1, backgroundColor: C.bg },
-  container: { padding: 12, paddingTop: 48, gap: 4 },
+  root: { flex: 1, backgroundColor: C.bg },
+  scroll: { flex: 1 },
+  container: { padding: PAD.screen, paddingTop: PAD.top, paddingBottom: 32, gap: 8 },
 
   win: { borderWidth: 1, borderColor: C.border, backgroundColor: C.panel },
   winInner: { borderWidth: 1, borderColor: C.border2, margin: 2 },
   winTitle: {
     backgroundColor: C.panel,
-    borderBottomWidth: 1,
-    borderBottomColor: C.border,
-    paddingVertical: 5,
-    paddingHorizontal: 8,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    borderBottomWidth: 1, borderBottomColor: C.border,
+    paddingVertical: 8, paddingHorizontal: 12,
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
   },
-  winTitleTxt: { fontFamily: F, fontSize: 7, color: C.blue2, letterSpacing: 1 },
-  backTxt: { fontFamily: F, fontSize: 6, color: C.text3 },
+  winTitleTxt: { fontFamily: F, fontSize: FS.title, color: C.blue2, letterSpacing: 1 },
+  winTitleSub: { fontFamily: F, fontSize: FS.small, color: C.text3 },
+  backTxt: { fontFamily: F, fontSize: FS.small, color: C.text3 },
 
-  titleBody: { padding: 10 },
-  portalName: { fontFamily: F, fontSize: 8, color: C.gold2, marginBottom: 6 },
-  selectTxt: { fontFamily: F, fontSize: 6, color: C.text3 },
+  titleBody: { padding: PAD.win },
+  titleSub: { fontFamily: F, fontSize: FS.small, color: C.text3 },
 
   counterRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    padding: 10,
+    flexDirection: 'row', alignItems: 'center',
+    gap: 12, padding: PAD.win,
   },
-  counterIcon: { fontSize: 20 },
+  counterIcon: { fontSize: 24 },
   counterInfo: { flex: 1 },
-  counterTitle: { fontFamily: F, fontSize: 6, color: C.gold2, marginBottom: 4 },
-  counterSub: { fontFamily: F, fontSize: 5, color: C.text3 },
+  counterTitle: { fontFamily: F, fontSize: FS.small, color: C.gold2, marginBottom: 5 },
+  counterSub: { fontFamily: F, fontSize: FS.tiny, color: C.text3 },
 
   menuRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+    flexDirection: 'row', alignItems: 'center', gap: 10,
     backgroundColor: C.panel,
-    borderBottomWidth: 1,
-    borderBottomColor: C.border2,
-    padding: 10,
+    borderBottomWidth: 1, borderBottomColor: C.border2,
+    padding: PAD.item,
   },
   menuRowSel: { backgroundColor: C.sel, borderBottomColor: C.border },
-  menuCursor: { fontFamily: F, fontSize: 8, color: C.gold2, width: 10 },
-  menuIcon: { fontSize: 14, width: 20, textAlign: 'center' },
-  menuBody: { flex: 1 },
-  menuName: { fontFamily: F, fontSize: 7, color: C.text },
-  xpBadge: {
-    borderWidth: 1,
-    paddingHorizontal: 5,
-    paddingVertical: 2,
-  },
-  xpTxt: { fontFamily: F, fontSize: 5 },
+  menuCursor: { fontFamily: F, fontSize: 12, color: C.gold2, width: 16 },
+  menuIcon: { fontSize: 22, width: 28, textAlign: 'center' },
+  menuName: { flex: 1, fontFamily: F, fontSize: FS.body, color: C.text },
+  xpBadge: { borderWidth: 1, paddingHorizontal: 6, paddingVertical: 3 },
+  xpTxt: { fontFamily: F, fontSize: FS.tiny },
 })
