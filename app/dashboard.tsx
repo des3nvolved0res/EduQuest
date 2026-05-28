@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native'
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'expo-router'
 import { collection, getDocs } from 'firebase/firestore'
@@ -53,62 +53,59 @@ export default function DashboardScreen() {
     return String(i + 1).padStart(2, '0')
   }
 
-  return (
+return (
     <View style={s.root}>
-      <ScrollView style={s.scroll} contentContainerStyle={s.container} showsVerticalScrollIndicator={false}>
 
-        <View style={s.win}>
-          <View style={s.winInner}>
-            <View style={s.winTitle}>
-              <TouchableOpacity onPress={() => router.back()}>
-                <Text style={s.backTxt}>◀ VOLTAR</Text>
-              </TouchableOpacity>
-              <Text style={s.winTitleTxt}>📊 RANKING DA TURMA</Text>
+      <View style={s.win}>
+        <View style={s.winInner}>
+          <View style={s.winTitle}>
+            <TouchableOpacity onPress={() => router.back()}>
+              <Text style={s.backTxt}>◀ VOLTAR</Text>
+            </TouchableOpacity>
+            <Text style={s.winTitleTxt}>📊 RANKING DA TURMA</Text>
+          </View>
+          <View style={s.statsRow}>
+            <View style={s.statBox}>
+              <Text style={[s.statVal, { color: C.blue2 }]}>{alunos.length}</Text>
+              <Text style={s.statLbl}>ALUNOS</Text>
+            </View>
+            <View style={s.statBox}>
+              <Text style={[s.statVal, { color: C.gold2 }]}>{mediaXP}</Text>
+              <Text style={s.statLbl}>XP MEDIO</Text>
+            </View>
+            <View style={s.statBox}>
+              <Text style={[s.statVal, { color: C.green2 }]}>{vouchersValidados}/{totalVouchers}</Text>
+              <Text style={s.statLbl}>VOUCHERS</Text>
             </View>
           </View>
         </View>
+      </View>
 
-        <View style={s.win}>
-          <View style={s.winInner}>
-            <View style={s.winTitle}>
-              <Text style={s.winTitleTxt}>ESTATISTICAS GERAIS</Text>
-            </View>
-            <View style={s.statsRow}>
-              <View style={s.statBox}>
-                <Text style={[s.statVal, { color: C.blue2 }]}>{alunos.length}</Text>
-                <Text style={s.statLbl}>ALUNOS</Text>
-              </View>
-              <View style={s.statBox}>
-                <Text style={[s.statVal, { color: C.gold2 }]}>{mediaXP}</Text>
-                <Text style={s.statLbl}>XP MEDIO</Text>
-              </View>
-              <View style={s.statBox}>
-                <Text style={[s.statVal, { color: C.green2 }]}>{vouchersValidados}/{totalVouchers}</Text>
-                <Text style={s.statLbl}>VOUCHERS</Text>
-              </View>
-            </View>
+      <View style={[s.win, { flex: 1 }]}>
+        <View style={[s.winInner, { flex: 1 }]}>
+          <View style={s.winTitle}>
+            <Text style={s.winTitleTxt}>TOP AVENTUREIROS</Text>
+            <Text style={s.winTitleSub}>{alunos.length} CADASTRADOS</Text>
           </View>
-        </View>
 
-        <View style={s.win}>
-          <View style={s.winInner}>
-            <View style={s.winTitle}>
-              <Text style={s.winTitleTxt}>TOP AVENTUREIROS</Text>
-              <Text style={s.winTitleSub}>{alunos.length} CADASTRADOS</Text>
+          {carregando ? (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+              <ActivityIndicator color={C.blue} />
             </View>
-
-            {carregando ? (
-              <View style={s.vazioBody}>
-                <Text style={s.vazioTxt}>CARREGANDO...</Text>
-              </View>
-            ) : alunos.length === 0 ? (
-              <View style={s.vazioBody}>
-                <Text style={s.vazioEmoji}>📭</Text>
-                <Text style={s.vazioTxt}>NENHUM ALUNO CADASTRADO</Text>
-              </View>
-            ) : (
-              alunos.map((aluno, i) => (
-                <View key={aluno.id} style={[s.rankRow, i === 0 && { borderBottomColor: C.gold }]}>
+          ) : alunos.length === 0 ? (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+              <Text style={{ fontFamily: F, fontSize: 32, marginBottom: 14 }}>📭</Text>
+              <Text style={{ fontFamily: F, fontSize: FS.small, color: C.text3 }}>
+                NENHUM ALUNO CADASTRADO
+              </Text>
+            </View>
+          ) : (
+            <View style={{ flex: 1 }}>
+              {alunos.map((aluno, i) => (
+                <View
+                  key={aluno.id}
+                  style={[s.rankRow, { flex: 1 }, i === 0 && { borderBottomColor: C.gold }]}
+                >
                   <Text style={[s.rankPos, i < 3 && { fontSize: 18 }]}>
                     {medalha(i)}
                   </Text>
@@ -132,21 +129,18 @@ export default function DashboardScreen() {
                     <Text style={s.nivelTxt}>NV{aluno.nivel}</Text>
                   </View>
                 </View>
-              ))
-            )}
-          </View>
+              ))}
+            </View>
+          )}
         </View>
+      </View>
 
-      </ScrollView>
     </View>
   )
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: C.bg },
-  scroll: { flex: 1 },
-  container: { padding: PAD.screen, paddingTop: PAD.top, paddingBottom: 32, gap: 8 },
-
+  root: { flex: 1, backgroundColor: C.bg, padding: PAD.screen, paddingTop: PAD.top, gap: 8 },
   win: { borderWidth: 1, borderColor: C.border, backgroundColor: C.panel },
   winInner: { borderWidth: 1, borderColor: C.border2, margin: 2 },
   winTitle: {
@@ -158,7 +152,6 @@ const s = StyleSheet.create({
   winTitleTxt: { fontFamily: F, fontSize: FS.title, color: C.blue2, letterSpacing: 1 },
   winTitleSub: { fontFamily: F, fontSize: FS.small, color: C.text3 },
   backTxt: { fontFamily: F, fontSize: FS.small, color: C.text3 },
-
   statsRow: { flexDirection: 'row', padding: 10, gap: 8 },
   statBox: {
     flex: 1, backgroundColor: '#000',
@@ -167,32 +160,25 @@ const s = StyleSheet.create({
   },
   statVal: { fontFamily: F, fontSize: 16, marginBottom: 5 },
   statLbl: { fontFamily: F, fontSize: FS.tiny, color: C.text3 },
-
   rankRow: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
-    padding: 14,
+    paddingHorizontal: PAD.screen,
     borderBottomWidth: 1, borderBottomColor: C.border2,
+    minHeight: 60,
   },
   rankPos: { fontFamily: F, fontSize: FS.small, color: C.text3, width: 28, textAlign: 'center' },
   rankInfo: { flex: 1 },
   rankNome: { fontFamily: F, fontSize: FS.body, color: C.text, marginBottom: 6 },
   rankBarWrap: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   rankBarTrack: {
-    flex: 1, height: 6,
-    backgroundColor: '#000',
-    borderWidth: 1, borderColor: C.border2,
-    overflow: 'hidden',
+    flex: 1, height: 6, backgroundColor: '#000',
+    borderWidth: 1, borderColor: C.border2, overflow: 'hidden',
   },
   rankBarFill: { height: '100%' },
   rankXP: { fontFamily: F, fontSize: FS.small, minWidth: 48, textAlign: 'right' },
   nivelBadge: {
-    backgroundColor: '#000',
-    borderWidth: 1, borderColor: C.border2,
+    backgroundColor: '#000', borderWidth: 1, borderColor: C.border2,
     paddingHorizontal: 8, paddingVertical: 4,
   },
   nivelTxt: { fontFamily: F, fontSize: FS.tiny, color: C.blue2 },
-
-  vazioBody: { padding: 24, alignItems: 'center' },
-  vazioEmoji: { fontSize: 36, marginBottom: 12 },
-  vazioTxt: { fontFamily: F, fontSize: FS.small, color: C.text3 },
 })

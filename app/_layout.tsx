@@ -19,6 +19,7 @@ export default function RootLayout() {
       <StatusBar barStyle="light-content" backgroundColor="#000000" />
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#000000' } }}>
         <Stack.Screen name="index" />
+        <Stack.Screen name="+not-found" />
         <Stack.Screen name="(auth)/login" />
         <Stack.Screen name="(auth)/cadastro" />
         <Stack.Screen name="(aluno)/index" />
@@ -32,7 +33,6 @@ export default function RootLayout() {
         <Stack.Screen name="validar" />
         <Stack.Screen name="dashboard" />
         <Stack.Screen name="missoes" />
-        <Stack.Screen name="+not-found" />
       </Stack>
     </SafeAreaProvider>
   )

@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native'
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert } from 'react-native'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'expo-router'
 import { signOut } from 'firebase/auth'
@@ -13,18 +13,26 @@ type DadosAluno = {
   nivel: number
 }
 
-const portais = [
-  { id: 'reliquias', nome: 'RELIQUIAS',      desc: 'Pontos permanentes',  icon: '💎', badge: '',    badgeColor: C.teal2 },
-  { id: 'ciclos',   nome: 'CICLOS',          desc: '12 dias restantes',   icon: '⏳', badge: '!',   badgeColor: C.gold2 },
-  { id: 'mural',    nome: 'MURAL DO MESTRE', desc: '2 missoes ativas',    icon: '📜', badge: 'NEW', badgeColor: C.teal2 },
-  { id: 'loja',     nome: 'LOJA',            desc: 'Troque XP por bonus', icon: '🏪', badge: '',    badgeColor: C.teal2 },
-  { id: 'perfil',   nome: 'PERFIL',          desc: 'Status e conquistas', icon: '🧙', badge: '',    badgeColor: C.teal2 },
-]
+function calcularDiasRestantes() {
+  const agora = new Date()
+  const fimDoMes = new Date(agora.getFullYear(), agora.getMonth() + 1, 0)
+  return Math.ceil((fimDoMes.getTime() - agora.getTime()) / (1000 * 60 * 60 * 24))
+}
 
 export default function HubAluno() {
   const router = useRouter()
   const [dados, setDados] = useState<DadosAluno | null>(null)
   const [sel, setSel] = useState(0)
+
+  const dias = calcularDiasRestantes()
+
+  const portais = [
+    { id: 'reliquias', nome: 'RELIQUIAS',      desc: 'Pontos permanentes',        icon: '💎', badge: '',    badgeColor: C.teal2 },
+    { id: 'ciclos',   nome: 'CICLOS',          desc: `${dias} dias restantes`,    icon: '⏳', badge: '!',   badgeColor: C.gold2 },
+    { id: 'mural',    nome: 'MURAL DO MESTRE', desc: '2 missoes ativas',          icon: '📜', badge: 'NEW', badgeColor: C.teal2 },
+    { id: 'loja',     nome: 'LOJA',            desc: 'Troque XP por bonus',       icon: '🏪', badge: '',    badgeColor: C.teal2 },
+    { id: 'perfil',   nome: 'PERFIL',          desc: 'Status e conquistas',       icon: '🧙', badge: '',    badgeColor: C.teal2 },
+  ]
 
   useEffect(() => {
     if (!auth.currentUser) return
@@ -35,10 +43,23 @@ export default function HubAluno() {
     return () => unsub()
   }, [])
 
-  async function sair() {
-    await signOut(auth)
-    router.replace('/(auth)/login')
-  }
+ async function sair() {
+  Alert.alert(
+    'SAIR DO JOGO',
+    'Deseja realmente sair?',
+    [
+      { text: 'CANCELAR', style: 'cancel' },
+      {
+        text: 'SAIR',
+        style: 'destructive',
+        onPress: async () => {
+          await signOut(auth)
+          router.replace('/(auth)/login')
+        }
+      }
+    ]
+  )
+}
 
   function navegar(id: string) {
     if (id === 'loja') router.push('/loja')
@@ -58,7 +79,6 @@ export default function HubAluno() {
         contentContainerStyle={s.container}
         showsVerticalScrollIndicator={false}
       >
-        {/* Status */}
         <View style={s.win}>
           <View style={s.winInner}>
             <View style={s.winTitle}>
@@ -109,7 +129,6 @@ export default function HubAluno() {
           </View>
         </View>
 
-        {/* Menu */}
         <View style={[s.win, s.winFlex]}>
           <View style={[s.winInner, { flex: 1 }]}>
             <View style={s.winTitle}>
@@ -154,7 +173,6 @@ const s = StyleSheet.create({
     paddingBottom: PAD.screen,
     gap: 8,
   },
-
   win: { borderWidth: 1, borderColor: C.border, backgroundColor: C.panel },
   winFlex: { flex: 1 },
   winInner: { borderWidth: 1, borderColor: C.border2, margin: 2 },
@@ -166,14 +184,12 @@ const s = StyleSheet.create({
   },
   winTitleTxt: { fontFamily: F, fontSize: FS.title, color: C.blue2, letterSpacing: 1 },
   sairTxt: { fontFamily: F, fontSize: FS.small, color: C.text3 },
-
   charRow: {
     flexDirection: 'row', gap: 12, padding: 14,
     borderBottomWidth: 1, borderBottomColor: C.border2,
   },
   avatar: {
-    width: 68, height: 68,
-    backgroundColor: '#001428',
+    width: 68, height: 68, backgroundColor: '#001428',
     borderWidth: 1, borderColor: C.border,
     alignItems: 'center', justifyContent: 'center',
   },
@@ -184,14 +200,11 @@ const s = StyleSheet.create({
   barRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 5 },
   barLbl: { fontFamily: F, fontSize: FS.small, color: C.text2, width: 22 },
   barTrack: {
-    flex: 1, height: 9,
-    backgroundColor: '#000',
-    borderWidth: 1, borderColor: '#334',
-    overflow: 'hidden',
+    flex: 1, height: 9, backgroundColor: '#000',
+    borderWidth: 1, borderColor: '#334', overflow: 'hidden',
   },
   barFill: { height: '100%' },
   barVal: { fontFamily: F, fontSize: FS.small, minWidth: 56, textAlign: 'right' },
-
   statsRow: { flexDirection: 'row', padding: 10, gap: 8 },
   statBox: {
     flex: 1, backgroundColor: '#000',
@@ -200,7 +213,6 @@ const s = StyleSheet.create({
   },
   statVal: { fontFamily: F, fontSize: 18, marginBottom: 5 },
   statLbl: { fontFamily: F, fontSize: FS.tiny, color: C.text3 },
-
   menuRow: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
     backgroundColor: C.panel,

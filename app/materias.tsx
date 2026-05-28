@@ -25,6 +25,7 @@ const nomePortal: Record<string, string> = {
 type Missao = {
   id: string
   titulo: string
+  materia: string
   nomeMateria: string
   emojiMateria: string
   bonusXP: number
@@ -59,13 +60,13 @@ export default function MateriasScreen() {
     }
   }, [portal])
 
-useEffect(() => {
-  if (!auth.currentUser) return
-  const uid = auth.currentUser.uid
-  const unsub = onSnapshot(doc(db, 'usuarios', uid), (snap) => {
-    if (snap.exists()) {
-      setXpMaterias(snap.data()?.xpMaterias ?? {})
-    }
+  useEffect(() => {
+    if (!auth.currentUser) return
+    const uid = auth.currentUser.uid
+    const unsub = onSnapshot(doc(db, 'usuarios', uid), (snap) => {
+      if (snap.exists()) {
+        setXpMaterias(snap.data()?.xpMaterias ?? {})
+     }
   })
   return () => unsub()
 }, [])
@@ -112,7 +113,7 @@ useEffect(() => {
                   <TouchableOpacity
                     key={m.id}
                     style={[s.missaoRow, { flex: 1 }]}
-                    onPress={() => router.push(`/topicos?portal=mural&materia=${m.id}`)}
+                    onPress={() => router.push(`/topicos?portal=mural&materia=${m.materia}`)}
                     activeOpacity={0.8}
                   >
                     <Text style={s.menuCursor}>▶</Text>

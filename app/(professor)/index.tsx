@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
+import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'expo-router'
 import { signOut } from 'firebase/auth'
@@ -21,10 +21,23 @@ export default function HomeProfessor() {
     return () => unsub()
   }, [])
 
-  async function sair() {
-    await signOut(auth)
-    router.replace('/(auth)/login')
-  }
+ async function sair() {
+  Alert.alert(
+    'SAIR DO JOGO',
+    'Deseja realmente sair?',
+    [
+      { text: 'CANCELAR', style: 'cancel' },
+      {
+        text: 'SAIR',
+        style: 'destructive',
+        onPress: async () => {
+          await signOut(auth)
+          router.replace('/(auth)/login')
+        }
+      }
+    ]
+  )
+}
 
   return (
     <View style={s.root}>

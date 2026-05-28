@@ -32,6 +32,7 @@ type DadosAluno = {
 
 export default function LojaScreen() {
   const router = useRouter()
+  const [validadeStr, setValidadeStr] = useState('')
   const [dados, setDados] = useState<DadosAluno | null>(null)
   const [aba, setAba] = useState<'bonus' | 'cosmeticos'>('bonus')
   const [materiaSel, setMateriaSel] = useState<string | null>(null)
@@ -79,7 +80,9 @@ export default function LojaScreen() {
         xp: quantidade,
         validado: false,
         criadoEm: new Date().toISOString(),
+        validadeStr,
       })
+      setValidadeStr(validadeStr)
       setVoucher(codigo)
       setModal(true)
     } catch {
@@ -113,156 +116,117 @@ export default function LojaScreen() {
     ])
   }
 
-  return (
+ return (
     <View style={s.root}>
-      <ScrollView style={s.scroll} contentContainerStyle={s.container} showsVerticalScrollIndicator={false}>
 
+      <View style={s.win}>
+        <View style={s.winInner}>
+          <View style={s.winTitle}>
+            <TouchableOpacity onPress={() => router.back()}>
+              <Text style={s.backTxt}>◀ VOLTAR</Text>
+            </TouchableOpacity>
+            <Text style={s.winTitleTxt}>🏪 LOJA</Text>
+          </View>
+          <View style={s.saldoRow}>
+            <View style={s.saldoBox}>
+              <Text style={[s.saldoVal, { color: C.green2 }]}>{dados?.pontosPermanentes ?? 0}</Text>
+              <Text style={s.saldoLbl}>💎 CRISTAIS</Text>
+            </View>
+            <View style={s.saldoBox}>
+              <Text style={[s.saldoVal, { color: C.purple2 }]}>{dados?.pontosTemporarios ?? 0}</Text>
+              <Text style={s.saldoLbl}>⚡ BONUS</Text>
+            </View>
+          </View>
+          <View style={s.toggle}>
+            <TouchableOpacity style={[s.toggleBtn, aba === 'bonus' && s.toggleBtnOn]} onPress={() => setAba('bonus')}>
+              <Text style={[s.toggleTxt, aba === 'bonus' && s.toggleTxtOn]}>🎓 BONUS DE NOTA</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[s.toggleBtn, aba === 'cosmeticos' && s.toggleBtnOn]} onPress={() => setAba('cosmeticos')}>
+              <Text style={[s.toggleTxt, aba === 'cosmeticos' && s.toggleTxtOn]}>✨ COSMETICOS</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+
+      {aba === 'bonus' && (
         <View style={s.win}>
           <View style={s.winInner}>
             <View style={s.winTitle}>
-              <TouchableOpacity onPress={() => router.back()}>
-                <Text style={s.backTxt}>◀ VOLTAR</Text>
-              </TouchableOpacity>
-              <Text style={s.winTitleTxt}>🏪 LOJA</Text>
+              <Text style={s.winTitleTxt}>TIPO</Text>
             </View>
-            <View style={s.saldoRow}>
-              <View style={s.saldoBox}>
-                <Text style={[s.saldoVal, { color: C.green2 }]}>{dados?.pontosPermanentes ?? 0}</Text>
-                <Text style={s.saldoLbl}>💎 CRISTAIS</Text>
-              </View>
-              <View style={s.saldoBox}>
-                <Text style={[s.saldoVal, { color: C.purple2 }]}>{dados?.pontosTemporarios ?? 0}</Text>
-                <Text style={s.saldoLbl}>⚡ BONUS</Text>
-              </View>
+            <View style={s.toggle}>
+              <TouchableOpacity style={[s.toggleBtn, tipoPonto === 'permanentes' && s.toggleBtnOn]} onPress={() => setTipoPonto('permanentes')}>
+                <Text style={[s.toggleTxt, tipoPonto === 'permanentes' && s.toggleTxtOn]}>💎 CRISTAIS</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[s.toggleBtn, tipoPonto === 'temporarios' && s.toggleBtnOn]} onPress={() => setTipoPonto('temporarios')}>
+                <Text style={[s.toggleTxt, tipoPonto === 'temporarios' && s.toggleTxtOn]}>⚡ BONUS</Text>
+              </TouchableOpacity>
             </View>
           </View>
         </View>
+      )}
 
+      <View style={[s.win, { flex: 1 }]}>
+        <View style={[s.winInner, { flex: 1 }]}>
+          <View style={s.winTitle}>
+            <Text style={s.winTitleTxt}>{aba === 'bonus' ? 'SELECIONE A MATERIA' : 'COSMETICOS'}</Text>
+            {aba === 'bonus' && <Text style={s.winTitleSub}>SALDO: {saldo} XP</Text>}
+          </View>
+          <View style={{ flex: 1 }}>
+            {aba === 'bonus' ? materias.map((m, i) => (
+              <TouchableOpacity
+                key={m.id}
+                style={[s.menuRow, materiaSel === m.id && s.menuRowSel, { flex: 1 }]}
+                onPress={() => setMateriaSel(m.id)}
+                activeOpacity={0.8}
+              >
+                <Text style={s.menuCursor}>{materiaSel === m.id ? '▶' : ' '}</Text>
+                <Text style={s.menuIcon}>{m.emoji}</Text>
+                <Text style={s.menuName}>{m.nome}</Text>
+              </TouchableOpacity>
+            )) : cosmeticos.map((c) => {
+              const tem = dados?.cosmeticosDesbloqueados?.includes(c.id)
+              return (
+                <TouchableOpacity
+                  key={c.id}
+                  style={[s.menuRow, { flex: 1, opacity: tem ? 0.5 : 1 }]}
+                  onPress={() => comprar(c)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={s.menuCursor}>{tem ? '✓' : '▶'}</Text>
+                  <Text style={s.menuIcon}>{c.emoji}</Text>
+                  <Text style={s.menuName}>{c.nome}</Text>
+                  <View style={[s.xpBadge, { borderColor: tem ? C.green : C.gold }]}>
+                    <Text style={[s.xpTxt, { color: tem ? C.green2 : C.gold2 }]}>{tem ? 'SEU' : `${c.custo}XP`}</Text>
+                  </View>
+                </TouchableOpacity>
+              )
+            })}
+          </View>
+        </View>
+      </View>
+
+      {aba === 'bonus' && (
         <View style={s.win}>
           <View style={s.winInner}>
-            <View style={s.toggle}>
-              <TouchableOpacity
-                style={[s.toggleBtn, aba === 'bonus' && s.toggleBtnOn]}
-                onPress={() => setAba('bonus')}
-              >
-                <Text style={[s.toggleTxt, aba === 'bonus' && s.toggleTxtOn]}>🎓 BONUS DE NOTA</Text>
+            <View style={s.qtdRow}>
+              <TouchableOpacity style={s.qtdBtn} onPress={() => setQuantidade(q => Math.max(10, q - 10))}>
+                <Text style={s.qtdBtnTxt}>−</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                style={[s.toggleBtn, aba === 'cosmeticos' && s.toggleBtnOn]}
-                onPress={() => setAba('cosmeticos')}
-              >
-                <Text style={[s.toggleTxt, aba === 'cosmeticos' && s.toggleTxtOn]}>✨ COSMETICOS</Text>
+              <View style={s.qtdDisplay}>
+                <Text style={s.qtdVal}>{quantidade}</Text>
+                <Text style={s.qtdLbl}>XP</Text>
+              </View>
+              <TouchableOpacity style={s.qtdBtn} onPress={() => setQuantidade(q => Math.min(saldo, q + 10))}>
+                <Text style={s.qtdBtnTxt}>+</Text>
               </TouchableOpacity>
             </View>
+            <TouchableOpacity style={[s.btnGold, salvando && { opacity: 0.6 }]} onPress={resgatar} disabled={salvando} activeOpacity={0.8}>
+              <Text style={s.btnGoldTxt}>{salvando ? 'GERANDO...' : '🎟 GERAR VOUCHER'}</Text>
+            </TouchableOpacity>
           </View>
         </View>
-
-        {aba === 'bonus' && (
-          <>
-            <View style={s.win}>
-              <View style={s.winInner}>
-                <View style={s.winTitle}>
-                  <Text style={s.winTitleTxt}>TIPO DE PONTOS</Text>
-                </View>
-                <View style={s.toggle}>
-                  <TouchableOpacity
-                    style={[s.toggleBtn, tipoPonto === 'permanentes' && s.toggleBtnOn]}
-                    onPress={() => setTipoPonto('permanentes')}
-                  >
-                    <Text style={[s.toggleTxt, tipoPonto === 'permanentes' && s.toggleTxtOn]}>💎 CRISTAIS</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[s.toggleBtn, tipoPonto === 'temporarios' && s.toggleBtnOn]}
-                    onPress={() => setTipoPonto('temporarios')}
-                  >
-                    <Text style={[s.toggleTxt, tipoPonto === 'temporarios' && s.toggleTxtOn]}>⚡ BONUS</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </View>
-
-            <View style={s.win}>
-              <View style={s.winInner}>
-                <View style={s.winTitle}>
-                  <Text style={s.winTitleTxt}>MATERIA</Text>
-                </View>
-                {materias.map((m) => (
-                  <TouchableOpacity
-                    key={m.id}
-                    style={[s.menuRow, materiaSel === m.id && s.menuRowSel]}
-                    onPress={() => setMateriaSel(m.id)}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={s.menuCursor}>{materiaSel === m.id ? '▶' : ' '}</Text>
-                    <Text style={s.menuIcon}>{m.emoji}</Text>
-                    <Text style={s.menuName}>{m.nome}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-
-            <View style={s.win}>
-              <View style={s.winInner}>
-                <View style={s.winTitle}>
-                  <Text style={s.winTitleTxt}>QUANTIDADE</Text>
-                  <Text style={s.winTitleSub}>SALDO: {saldo} XP</Text>
-                </View>
-                <View style={s.qtdRow}>
-                  <TouchableOpacity style={s.qtdBtn} onPress={() => setQuantidade(q => Math.max(10, q - 10))}>
-                    <Text style={s.qtdBtnTxt}>−</Text>
-                  </TouchableOpacity>
-                  <View style={s.qtdDisplay}>
-                    <Text style={s.qtdVal}>{quantidade}</Text>
-                    <Text style={s.qtdLbl}>XP</Text>
-                  </View>
-                  <TouchableOpacity style={s.qtdBtn} onPress={() => setQuantidade(q => Math.min(saldo, q + 10))}>
-                    <Text style={s.qtdBtnTxt}>+</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </View>
-
-            <View style={s.win}>
-              <View style={s.winInner}>
-                <TouchableOpacity style={[s.btnGold, salvando && { opacity: 0.6 }]} onPress={resgatar} disabled={salvando} activeOpacity={0.8}>
-                  <Text style={s.btnGoldTxt}>{salvando ? 'GERANDO...' : '🎟 GERAR VOUCHER'}</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </>
-        )}
-
-        {aba === 'cosmeticos' && (
-          <View style={s.win}>
-            <View style={s.winInner}>
-              <View style={s.winTitle}>
-                <Text style={s.winTitleTxt}>ITENS DISPONIVEIS</Text>
-              </View>
-              {cosmeticos.map((c) => {
-                const tem = dados?.cosmeticosDesbloqueados?.includes(c.id)
-                return (
-                  <TouchableOpacity
-                    key={c.id}
-                    style={[s.menuRow, tem && { opacity: 0.5 }]}
-                    onPress={() => comprar(c)}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={s.menuCursor}>{tem ? '✓' : '▶'}</Text>
-                    <Text style={s.menuIcon}>{c.emoji}</Text>
-                    <Text style={s.menuName}>{c.nome}</Text>
-                    <View style={[s.xpBadge, { borderColor: tem ? C.green : C.gold }]}>
-                      <Text style={[s.xpTxt, { color: tem ? C.green2 : C.gold2 }]}>
-                        {tem ? 'SEU' : `${c.custo}XP`}
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
-                )
-              })}
-            </View>
-          </View>
-        )}
-
-      </ScrollView>
+      )}
 
       <Modal visible={modal} transparent animationType="fade">
         <View style={s.modalOverlay}>
@@ -279,11 +243,7 @@ export default function LojaScreen() {
               </Text>
               <Text style={s.voucherSub}>APRESENTE AO PROFESSOR</Text>
             </View>
-            <TouchableOpacity
-              style={s.btnBlue}
-              onPress={() => { setModal(false); setVoucher(null); setMateriaSel(null); setQuantidade(10) }}
-              activeOpacity={0.8}
-            >
+            <TouchableOpacity style={s.btnBlue} onPress={() => { setModal(false); setVoucher(null); setMateriaSel(null); setQuantidade(10) }} activeOpacity={0.8}>
               <Text style={s.btnBlueTxt}>▶ ENTENDIDO</Text>
             </TouchableOpacity>
           </View>
@@ -291,13 +251,11 @@ export default function LojaScreen() {
       </Modal>
     </View>
   )
+  
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: C.bg },
-  scroll: { flex: 1 },
-  container: { padding: PAD.screen, paddingTop: PAD.top, paddingBottom: 32, gap: 8 },
-
+  root: { flex: 1, backgroundColor: C.bg, padding: PAD.screen, paddingTop: PAD.top, gap: 8 },
   win: { borderWidth: 1, borderColor: C.border, backgroundColor: C.panel },
   winInner: { borderWidth: 1, borderColor: C.border2, margin: 2 },
   winTitle: {
@@ -309,78 +267,49 @@ const s = StyleSheet.create({
   winTitleTxt: { fontFamily: F, fontSize: FS.title, color: C.blue2, letterSpacing: 1 },
   winTitleSub: { fontFamily: F, fontSize: FS.small, color: C.text3 },
   backTxt: { fontFamily: F, fontSize: FS.small, color: C.text3 },
-
   saldoRow: { flexDirection: 'row', padding: 10, gap: 8 },
-  saldoBox: {
-    flex: 1, backgroundColor: '#000',
-    borderWidth: 1, borderColor: C.border2,
-    padding: 12, alignItems: 'center',
-  },
+  saldoBox: { flex: 1, backgroundColor: '#000', borderWidth: 1, borderColor: C.border2, padding: 12, alignItems: 'center' },
   saldoVal: { fontFamily: F, fontSize: 18, marginBottom: 5 },
   saldoLbl: { fontFamily: F, fontSize: FS.tiny, color: C.text3 },
-
   toggle: { flexDirection: 'row' },
   toggleBtn: { flex: 1, paddingVertical: 14, alignItems: 'center', backgroundColor: C.bg },
   toggleBtnOn: { backgroundColor: C.blue },
   toggleTxt: { fontFamily: F, fontSize: FS.small, color: C.text3, letterSpacing: 1 },
   toggleTxtOn: { color: '#000' },
-
   menuRow: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
     backgroundColor: C.panel,
     borderBottomWidth: 1, borderBottomColor: C.border2,
-    padding: PAD.item,
+    paddingHorizontal: PAD.screen, minHeight: 56,
   },
   menuRowSel: { backgroundColor: C.sel, borderBottomColor: C.border },
   menuCursor: { fontFamily: F, fontSize: 12, color: C.gold2, width: 16 },
-  menuIcon: { fontSize: 22, width: 28, textAlign: 'center' },
+  menuIcon: { fontSize: 20, width: 26, textAlign: 'center' },
   menuName: { flex: 1, fontFamily: F, fontSize: FS.body, color: C.text },
   xpBadge: { borderWidth: 1, paddingHorizontal: 6, paddingVertical: 3 },
   xpTxt: { fontFamily: F, fontSize: FS.tiny },
-
-  qtdRow: {
-    flexDirection: 'row', alignItems: 'center',
-    justifyContent: 'center', gap: 28, padding: 16,
-  },
-  qtdBtn: {
-    width: 40, height: 40, backgroundColor: '#000',
-    borderWidth: 1, borderColor: C.border,
-    alignItems: 'center', justifyContent: 'center',
-  },
+  qtdRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 28, padding: 14 },
+  qtdBtn: { width: 40, height: 40, backgroundColor: '#000', borderWidth: 1, borderColor: C.border, alignItems: 'center', justifyContent: 'center' },
   qtdBtnTxt: { fontFamily: F, fontSize: 18, color: C.text },
   qtdDisplay: { alignItems: 'center' },
   qtdVal: { fontFamily: F, fontSize: 28, color: C.text },
   qtdLbl: { fontFamily: F, fontSize: FS.small, color: C.text3 },
-
   btnBlue: {
     backgroundColor: C.blue,
-    borderTopWidth: 2, borderLeftWidth: 2,
-    borderBottomWidth: 2, borderRightWidth: 2,
-    borderTopColor: C.blue2, borderLeftColor: C.blue2,
-    borderBottomColor: '#112266', borderRightColor: '#112266',
-    paddingVertical: 16, alignItems: 'center',
-    margin: 10, marginBottom: 6,
+    borderTopWidth: 2, borderLeftWidth: 2, borderBottomWidth: 2, borderRightWidth: 2,
+    borderTopColor: C.blue2, borderLeftColor: C.blue2, borderBottomColor: '#112266', borderRightColor: '#112266',
+    paddingVertical: 16, alignItems: 'center', margin: 10, marginBottom: 6,
   },
   btnBlueTxt: { fontFamily: F, fontSize: FS.body, color: '#000', letterSpacing: 1 },
   btnGold: {
     backgroundColor: C.gold,
-    borderTopWidth: 2, borderLeftWidth: 2,
-    borderBottomWidth: 2, borderRightWidth: 2,
-    borderTopColor: C.gold2, borderLeftColor: C.gold2,
-    borderBottomColor: '#442200', borderRightColor: '#442200',
-    paddingVertical: 16, alignItems: 'center',
-    margin: 10,
+    borderTopWidth: 2, borderLeftWidth: 2, borderBottomWidth: 2, borderRightWidth: 2,
+    borderTopColor: C.gold2, borderLeftColor: C.gold2, borderBottomColor: '#442200', borderRightColor: '#442200',
+    paddingVertical: 16, alignItems: 'center', margin: 10,
   },
   btnGoldTxt: { fontFamily: F, fontSize: FS.body, color: '#000', letterSpacing: 1 },
-
-  modalOverlay: {
-    flex: 1, backgroundColor: 'rgba(0,0,0,0.9)',
-    justifyContent: 'center', alignItems: 'center', padding: 20,
-  },
-  modalCard: {
-    width: '100%', backgroundColor: C.panel,
-    borderWidth: 1, borderColor: C.gold,
-  },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.9)', justifyContent: 'center', alignItems: 'center', padding: 20 },
+  modalCard: { width: '100%', backgroundColor: C.panel, borderWidth: 1, borderColor: C.gold },
   voucherBody: { padding: 24, alignItems: 'center' },
   voucherTag: { fontFamily: F, fontSize: FS.tiny, color: C.text3, letterSpacing: 2, marginBottom: 12 },
   voucherCode: { fontFamily: F, fontSize: 18, color: C.gold2, letterSpacing: 4, marginBottom: 12 },
