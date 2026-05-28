@@ -7,7 +7,12 @@ export default {
     version: "1.0.0",
     orientation: "portrait",
     scheme: "eduquest",
-    platforms: ["ios", "android"],
+   android: {
+      package: "com.eduquest.app"
+    },
+    ios: {
+      bundleIdentifier: "com.eduquest.app"
+    },
     extra: {
       firebaseApiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
       firebaseAuthDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
