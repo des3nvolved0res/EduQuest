@@ -1,30 +1,14 @@
-import { useEffect, useState } from 'react'
 import { Stack } from 'expo-router'
+import { useFonts, PressStart2P_400Regular } from '@expo-google-fonts/press-start-2p'
 import { View, ActivityIndicator } from 'react-native'
-import { onAuthStateChanged } from 'firebase/auth'
-import { auth } from '@/config/firebase'
-import { useRouter } from 'expo-router'
 
 export default function RootLayout() {
-  const [verificando, setVerificando] = useState(true)
-  const router = useRouter()
+  const [fontsLoaded] = useFonts({ PressStart2P_400Regular })
 
-  useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (usuario) => {
-      if (usuario) {
-        router.replace('/aluno')
-      } else {
-        router.replace('/(auth)/login')
-      }
-      setVerificando(false)
-    })
-    return () => unsub()
-  }, [])
-
-  if (verificando) {
+  if (!fontsLoaded) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#000000' }}>
-        <ActivityIndicator size="large" color="#4488ff" />
+      <View style={{ flex: 1, backgroundColor: '#000000', justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator color="#4488ff" />
       </View>
     )
   }
