@@ -72,38 +72,34 @@ export default function TopicosScreen() {
   const topicos = topicosPorMateria[materia] ?? []
   const [sel, setSel] = useState(0)
 
-  return (
+return (
     <View style={s.root}>
-      <ScrollView style={s.scroll} contentContainerStyle={s.container} showsVerticalScrollIndicator={false}>
-
-        <View style={s.win}>
-          <View style={s.winInner}>
-            <View style={s.winTitle}>
-              <TouchableOpacity onPress={() => router.back()}>
-                <Text style={s.backTxt}>◀ VOLTAR</Text>
-              </TouchableOpacity>
-              <Text style={s.winTitleTxt}>{nomesMateria[materia] ?? materia}</Text>
-            </View>
-            <View style={s.titleBody}>
-              <Text style={s.titleSub}>SELECIONE O TOPICO</Text>
-            </View>
+      <View style={s.win}>
+        <View style={s.winInner}>
+          <View style={s.winTitle}>
+            <TouchableOpacity onPress={() => router.back()}>
+              <Text style={s.backTxt}>◀ VOLTAR</Text>
+            </TouchableOpacity>
+            <Text style={s.winTitleTxt}>{nomesMateria[materia] ?? materia}</Text>
+          </View>
+          <View style={s.titleBody}>
+            <Text style={s.titleSub}>SELECIONE O TOPICO</Text>
           </View>
         </View>
+      </View>
 
-        <View style={s.win}>
-          <View style={s.winInner}>
-            <View style={s.winTitle}>
-              <Text style={s.winTitleTxt}>TOPICOS</Text>
-              <Text style={s.winTitleSub}>{topicos.length} DISPONIVEL</Text>
-            </View>
+      <View style={[s.win, { flex: 1 }]}>
+        <View style={[s.winInner, { flex: 1 }]}>
+          <View style={s.winTitle}>
+            <Text style={s.winTitleTxt}>TOPICOS</Text>
+            <Text style={s.winTitleSub}>{topicos.length} DISPONIVEL</Text>
+          </View>
+          <View style={{ flex: 1 }}>
             {topicos.map((t, i) => (
               <TouchableOpacity
                 key={t.id}
-                style={[s.menuRow, sel === i && s.menuRowSel]}
-                onPress={() => {
-                  setSel(i)
-                  router.push(`/pilulas?portal=${portal}&materia=${materia}&topico=${t.id}`)
-                }}
+                style={[s.menuRow, sel === i && s.menuRowSel, { flex: 1 }]}
+                onPress={() => { setSel(i); router.push(`/pilulas?portal=${portal}&materia=${materia}&topico=${t.id}`) }}
                 activeOpacity={0.8}
               >
                 <Text style={s.menuCursor}>{sel === i ? '▶' : ' '}</Text>
@@ -118,43 +114,37 @@ export default function TopicosScreen() {
             ))}
           </View>
         </View>
-
-      </ScrollView>
+      </View>
     </View>
   )
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: C.bg },
-  scroll: { flex: 1 },
-  container: { padding: PAD.screen, paddingTop: PAD.top, paddingBottom: 32, gap: 8 },
-
+  root: { flex: 1, backgroundColor: C.bg, padding: PAD.screen, paddingTop: PAD.top, gap: 8 },
   win: { borderWidth: 1, borderColor: C.border, backgroundColor: C.panel },
   winInner: { borderWidth: 1, borderColor: C.border2, margin: 2 },
   winTitle: {
     backgroundColor: C.panel,
     borderBottomWidth: 1, borderBottomColor: C.border,
-    paddingVertical: 8, paddingHorizontal: 12,
+    paddingVertical: 10, paddingHorizontal: 12,
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
   },
   winTitleTxt: { fontFamily: F, fontSize: FS.title, color: C.blue2, letterSpacing: 1 },
   winTitleSub: { fontFamily: F, fontSize: FS.small, color: C.text3 },
   backTxt: { fontFamily: F, fontSize: FS.small, color: C.text3 },
-
   titleBody: { padding: PAD.win },
   titleSub: { fontFamily: F, fontSize: FS.small, color: C.text3 },
-
   menuRow: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
     backgroundColor: C.panel,
     borderBottomWidth: 1, borderBottomColor: C.border2,
-    padding: PAD.item,
+    paddingHorizontal: PAD.screen,
+    minHeight: 72,
   },
   menuRowSel: { backgroundColor: C.sel, borderBottomColor: C.border },
   menuCursor: { fontFamily: F, fontSize: 12, color: C.gold2, width: 16 },
   numBox: {
-    width: 30, height: 30,
-    backgroundColor: '#000',
+    width: 32, height: 32, backgroundColor: '#000',
     borderWidth: 1, borderColor: C.border2,
     alignItems: 'center', justifyContent: 'center',
   },

@@ -1,31 +1,26 @@
-import { useRouter } from "expo-router";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useEffect } from 'react'
+import { View, ActivityIndicator } from 'react-native'
+import { useRouter } from 'expo-router'
+import { onAuthStateChanged } from 'firebase/auth'
+import { auth } from '@/config/firebase'
 
 export default function NotFound() {
-  const router = useRouter();
+  const router = useRouter()
+
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (usuario) => {
+      if (usuario) {
+        router.replace('/(aluno)/')
+      } else {
+        router.replace('/(auth)/login')
+      }
+    })
+    return () => unsub()
+  }, [])
 
   return (
-    <View style={s.container}>
-      <Text style={s.txt}>...</Text>
-      <TouchableOpacity onPress={() => router.replace("/(auth)/login")}>
-        <Text style={s.btn}>VOLTAR</Text>
-      </TouchableOpacity>
+    <View style={{ flex: 1, backgroundColor: '#000', justifyContent: 'center', alignItems: 'center' }}>
+      <ActivityIndicator color="#4488ff" />
     </View>
-  );
+  )
 }
-
-const s = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#000",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  txt: {
-    color: "#4488ff",
-    fontFamily: "PressStart2P_400Regular",
-    fontSize: 8,
-    marginBottom: 20,
-  },
-  btn: { color: "#4488ff", fontFamily: "PressStart2P_400Regular", fontSize: 8 },
-});
